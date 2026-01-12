@@ -9,6 +9,7 @@ import Report from './pages/Report';
 import MapVisualization from './pages/MapVisualization';
 import CommunityVoting from './pages/CommunityVoting';
 import CollaborationDashboard from './pages/CollaborationDashboard';
+import ImpactMonitoring from './pages/ImpactMonitoring';
 import Profile from './pages/Profile';
 import PageNotFound from './pages/PageNotFound';
 
@@ -26,6 +27,7 @@ function App() {
             <Route path="/map" element={<MapVisualization />} />
             <Route path="/voting" element={<CommunityVoting />} />
             <Route path="/collaboration" element={<CollaborationDashboard />} />
+            <Route path="/impact" element={<ImpactMonitoring />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
