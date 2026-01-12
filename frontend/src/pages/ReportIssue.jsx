@@ -1,6 +1,5 @@
 // src/pages/ReportIssue.jsx
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import Button from '../components/ui/Button';
 import { Camera, MapPin, Send } from 'lucide-react';
@@ -24,7 +23,6 @@ export default function ReportIssue() {
 
     return (
         <div className="min-h-screen bg-gray-50">
-            <Navbar />
             <div className="flex">
                 <Sidebar />
                 <main className="flex-1 p-6">

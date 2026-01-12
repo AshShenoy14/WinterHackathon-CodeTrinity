@@ -1,132 +1,44 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary: #22c55e;
-  --primary-light: #86efac;
-  --primary-dark: #15803d;
-  --secondary: #64748b;
-  --accent: #f59e0b;
+  --primary: #10b981;
+  --primary-light: #6ee7b7;
+  --primary-dark: #047857;
 }
 
 @layer base {
-  * {
-    @apply border-secondary-200;
-  }
-
   body {
-    @apply min-h-screen text-secondary-800 bg-white font-sans antialiased;
-    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  }
-
-  html {
-    scroll-behavior: smooth;
+    @apply min-h-screen text-gray-800 bg-gray-50 font-sans antialiased overflow-x-hidden;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(45, 212, 191, 0.1) 0%, transparent 40%);
+    background-size: cover;
+    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight text-secondary-900;
+    @apply font-display tracking-tight text-gray-900;
   }
 }
 
 @layer components {
-  /* Animation delays */
-  .animation-delay-100 {
-    animation-delay: 100ms;
-  }
-  
-  .animation-delay-200 {
-    animation-delay: 200ms;
-  }
-  
-  .animation-delay-300 {
-    animation-delay: 300ms;
-  }
-  
-  .animation-delay-500 {
-    animation-delay: 500ms;
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold rounded-xl px-6 py-2.5 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-glow active:scale-95;
   }
 
-  /* Glass morphism effects */
-  .glass-morphism {
-    @apply bg-white/80 backdrop-blur-xl border border-white/50 shadow-glass;
+  .card {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 rounded-2xl shadow-soft hover:shadow-soft-lg transition-all duration-300;
   }
 
-  .glass-morphism-dark {
-    @apply bg-black/20 backdrop-blur-xl border border-white/20 shadow-glass;
+  .glass-panel {
+    @apply bg-white/60 backdrop-blur-lg border border-white/50 shadow-glass;
   }
 
-  /* Gradient text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent;
-  }
-
-  .gradient-text-primary {
-    @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
-  }
-
-  /* Enhanced buttons */
-  .btn-glow {
-    @apply relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl px-6 py-3 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-button-hover active:scale-95;
-  }
-
-  .btn-glow::before {
-    content: '';
-    @apply absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 transition-opacity duration-300;
-  }
-
-  .btn-glow:hover::before {
-    @apply opacity-100;
-  }
-
-  /* Enhanced cards */
-  .card-elevated {
-    @apply bg-white border-0 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1;
-  }
-
-  .card-glass {
-    @apply glass-morphism rounded-2xl p-6 transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1;
-  }
-
-  /* Input fields */
-  .input-modern {
-    @apply w-full px-4 py-3 bg-white border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none hover:border-secondary-300;
-  }
-
-  .input-modern:focus {
-    @apply shadow-lg shadow-primary-500/20;
-  }
-
-  /* Status indicators */
-  .status-online {
-    @apply relative;
-  }
-
-  .status-online::before {
-    content: '';
-    @apply absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full border-2 border-white;
-  }
-
-  /* Loading skeletons */
-  .skeleton {
-    @apply bg-gradient-to-r from-secondary-200 via-secondary-100 to-secondary-200 bg-size-200 animate-shimmer rounded;
-  }
-
-  /* Mobile optimizations */
-  @media (max-width: 768px) {
-    .container-mobile {
-      @apply px-4;
-    }
-    
-    .text-responsive {
-      @apply text-sm;
-    }
-    
-    .card-mobile {
-      @apply rounded-xl p-4;
-    }
+  .input-field {
+    @apply w-full px-4 py-3 bg-white/50 border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all duration-200 outline-none backdrop-blur-sm hover:bg-white/80 focus:bg-white;
   }
 }
 
@@ -137,38 +49,9 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-secondary-50;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-secondary-300 rounded-full hover:bg-secondary-400 transition-colors;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-400;
-}
-
-/* Selection colors */
-::selection {
-  @apply bg-primary-100 text-primary-900;
-}
-
-::-moz-selection {
-  @apply bg-primary-100 text-primary-900;
-}
-
-/* Focus visible styles */
-.focus-visible:focus {
-  @apply outline-none ring-2 ring-primary-500 ring-offset-2;
-}
-
-/* Print styles */
-@media print {
-  .no-print {
-    @apply hidden;
-  }
-  
-  body {
-    @apply text-black bg-white;
-  }
+  @apply bg-emerald-200/80 rounded-full hover:bg-emerald-300 transition-colors;
 }
