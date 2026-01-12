@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
@@ -12,8 +13,15 @@ import CollaborationDashboard from './pages/CollaborationDashboard';
 import ImpactMonitoring from './pages/ImpactMonitoring';
 import Profile from './pages/Profile';
 import PageNotFound from './pages/PageNotFound';
+import IntroVideo from './components/IntroVideo';
 
 function App() {
+  const [showIntro, setShowIntro] = useState(true);
+
+  if (showIntro) {
+    return <IntroVideo onComplete={() => setShowIntro(false)} />;
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
