@@ -15,6 +15,7 @@ import Profile from './pages/Profile';
 import PageNotFound from './pages/PageNotFound';
 import IntroVideo from './components/IntroVideo';
 import ARView from './pages/ARView';
+import Leaderboard from './pages/Leaderboard';
 
 function App() {
   const [showIntro, setShowIntro] = useState(true);
@@ -39,6 +40,7 @@ function App() {
             <Route path="/impact" element={<ImpactMonitoring />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/ar-view" element={<ARView />} />
+            <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Layout>
@@ -48,4 +50,3 @@ function App() {
 }
 
 export default App;
-```

@@ -22,7 +22,8 @@ import {
   Clock,
   CheckCircle,
   Cloud,
-  Zap
+  Zap,
+  Box
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -392,15 +393,27 @@ const Dashboard = () => {
 
                       <div className="flex flex-col space-y-2 ml-4">
                         <div className="flex items-center space-x-2 text-sm">
-                          <span>{report.upvotes || 0}</span>
+                          <span className="font-medium text-gray-500">{report.upvotes || 0}</span>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleVoteOnReport(report.id, 'upvote')}
+                            className="text-gray-400 hover:text-green-600"
                           >
                             <ThumbsUp className="w-4 h-4" />
                           </Button>
                         </div>
+
+                        {report.aiAnalysis?.plantation_possible && (
+                          <Button
+                            to="/ar-view"
+                            size="xs"
+                            className="bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200 mt-2 w-full flex items-center justify-center gap-1"
+                          >
+                            <Box className="w-3 h-3" />
+                            Global AR View
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>

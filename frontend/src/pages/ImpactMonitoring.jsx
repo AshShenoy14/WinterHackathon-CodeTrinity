@@ -32,14 +32,32 @@ const ImpactMonitoring = () => {
   const [loading, setLoading] = useState(true);
 
   const calculateImpactMetrics = (reportsData) => {
-    const completedProjects = reportsData.filter(r => r.status === 'completed' || r.status === 'implemented');
-    // Simulate metrics based on reports
-    const treesPlanted = completedProjects.length * 15;
+    const completedProjects = reportsData.filter(r => r.status === 'completed' || r.status === 'implemented' || r.status === 'approved');
+
+    const treesPlanted = completedProjects.length * 15; // Base estimate
     const greenCoverIncrease = completedProjects.length * 0.5;
     const heatReduction = completedProjects.length * 0.8;
-    const co2Absorbed = treesPlanted * 48;
+
+    // Parse Real-Time AI Data for Carbon
+    let totalCarbon = 0;
+    reportsData.forEach(r => {
+      if (r.aiAnalysis?.estimated_carbon_offset) {
+        // Extract number from string like "25 kg/year" or "100 lbs"
+        const match = r.aiAnalysis.estimated_carbon_offset.match(/(\d+(\.\d+)?)/);
+        if (match) {
+          totalCarbon += parseFloat(match[0]);
+        } else {
+          totalCarbon += 48; // Fallback
+        }
+      } else if (r.status === 'approved') {
+        totalCarbon += 48; // Fallback
+      }
+    });
+
+    const co2Absorbed = Math.round(totalCarbon);
     const waterConserved = completedProjects.length * 1000;
     const communityEngagement = reportsData.reduce((sum, r) => sum + (r.upvotes || 0), 0);
+
     setImpactData({
       treesPlanted,
       greenCoverIncrease,
