@@ -1,22 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../services/firebase';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  onSnapshot,
-  doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  getDoc
-} from 'firebase/firestore';
-import { 
-  ThumbsUp, 
-  MessageSquare, 
-  Clock, 
-  CheckCircle, 
+import { reportsAPI } from '../services/api';
+import {
+  ThumbsUp,
+  MessageSquare,
+  Clock,
+  CheckCircle,
   User,
   TrendingUp,
   Filter,
@@ -33,21 +22,19 @@ const CommunityVoting = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'reports'),
-      orderBy('createdAt', 'desc')
-    );
+    const fetchReports = async () => {
+      try {
+        const response = await reportsAPI.getAll();
+        setReports(response.reports || []);
+      } catch (error) {
+        console.error("Failed to load reports", error);
+        toast.error("Could not load reports");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsData);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    fetchReports();
   }, []);
 
   const handleUpvote = async (reportId) => {
@@ -56,31 +43,30 @@ const CommunityVoting = () => {
       return;
     }
 
+    // Optimistic UI update
+    setReports(prevReports =>
+      prevReports.map(report => {
+        if (report.id === reportId) {
+          const hasUpvoted = report.upvotedBy?.includes(user.uid);
+          return {
+            ...report,
+            upvotes: (report.upvotes || 0) + (hasUpvoted ? -1 : 1),
+            upvotedBy: hasUpvoted
+              ? (report.upvotedBy || []).filter(id => id !== user.uid)
+              : [...(report.upvotedBy || []), user.uid]
+          };
+        }
+        return report;
+      })
+    );
+
     try {
-      const reportRef = doc(db, 'reports', reportId);
-      const reportDoc = await getDoc(reportRef);
-      const reportData = reportDoc.data();
-
-      const hasUpvoted = reportData.upvotedBy?.includes(user.uid);
-
-      if (hasUpvoted) {
-        // Remove upvote
-        await updateDoc(reportRef, {
-          upvotes: (reportData.upvotes || 0) - 1,
-          upvotedBy: arrayRemove(user.uid)
-        });
-        toast.success('Upvote removed');
-      } else {
-        // Add upvote
-        await updateDoc(reportRef, {
-          upvotes: (reportData.upvotes || 0) + 1,
-          upvotedBy: arrayUnion(user.uid)
-        });
-        toast.success('Upvoted successfully!');
-      }
+      await reportsAPI.vote(reportId, 'upvote');
+      toast.success('Vote updated');
     } catch (error) {
       toast.error('Error updating upvote');
       console.error(error);
+      // Revert optimistic update could be added here
     }
   };
 
@@ -88,17 +74,17 @@ const CommunityVoting = () => {
     .filter(report => {
       // Filter by status
       if (filter !== 'all' && report.status !== filter) return false;
-      
+
       // Filter by search term
       if (searchTerm) {
         const searchLower = searchTerm.toLowerCase();
         return (
           report.description?.toLowerCase().includes(searchLower) ||
-          report.address?.toLowerCase().includes(searchLower) ||
-          report.type?.toLowerCase().includes(searchLower)
+          report.location?.address?.toLowerCase().includes(searchLower) ||
+          report.reportType?.toLowerCase().includes(searchLower)
         );
       }
-      
+
       return true;
     })
     .sort((a, b) => {
@@ -106,9 +92,12 @@ const CommunityVoting = () => {
         case 'upvotes':
           return (b.upvotes || 0) - (a.upvotes || 0);
         case 'recent':
-          return b.createdAt?.seconds - a.createdAt?.seconds;
+          // Handle both Firestore Timestamp and ISO string/Mock dates
+          const dateA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : new Date(a.createdAt).getTime();
+          const dateB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : new Date(b.createdAt).getTime();
+          return dateB - dateA;
         case 'feasibility':
-          return (b.feasibility?.feasibilityScore || 0) - (a.feasibility?.feasibilityScore || 0);
+          return (b.aiAnalysis?.confidence || 0) - (a.aiAnalysis?.confidence || 0);
         default:
           return 0;
       }
@@ -126,6 +115,7 @@ const CommunityVoting = () => {
 
   const getReportTypeIcon = (type) => {
     switch (type) {
+      case 'unused_space': return '🏚️';
       case 'vacant_land': return '🏚️';
       case 'tree_loss': return '🌳';
       case 'heat_hotspot': return '🔥';
@@ -221,10 +211,10 @@ const CommunityVoting = () => {
                 <div className="p-4 border-b">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="text-2xl">{getReportTypeIcon(report.type)}</span>
+                      <span className="text-2xl">{getReportTypeIcon(report.reportType)}</span>
                       <div>
                         <h3 className="font-semibold text-gray-800 capitalize">
-                          {report.type?.replace('_', ' ')}
+                          {report.reportType?.replace('_', ' ')}
                         </h3>
                         <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(report.status)}`}>
                           {report.status?.replace('_', ' ')}
@@ -233,7 +223,10 @@ const CommunityVoting = () => {
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-gray-500">
-                        {report.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}
+                        {report.createdAt?.seconds
+                          ? new Date(report.createdAt.seconds * 1000).toLocaleDateString()
+                          : new Date(report.createdAt).toLocaleDateString()
+                        }
                       </p>
                     </div>
                   </div>
@@ -254,44 +247,35 @@ const CommunityVoting = () => {
                   </p>
 
                   <p className="text-xs text-gray-500 mb-3">
-                    <strong>Location:</strong> {report.address}
+                    <strong>Location:</strong> {report.location?.address || report.address}
                   </p>
 
                   {/* AI Analysis */}
-                  {report.imageAnalysis && (
+                  {report.aiAnalysis && (
                     <div className="bg-blue-50 rounded-lg p-3 mb-3">
                       <h4 className="font-medium text-blue-900 text-sm mb-2">AI Analysis</h4>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="font-medium">Suitability:</span> {((report.imageAnalysis.suitabilityScore || 0) * 100).toFixed(1)}%
+                      <div className="space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Risk:</span> {report.aiAnalysis.riskLevel}
                         </div>
                         <div>
-                          <span className="font-medium">Vegetation:</span> {((report.imageAnalysis.vegetationCover || 0) * 100).toFixed(1)}%
+                          <span className="font-medium">Recommendation:</span> <span className="line-clamp-1">{report.aiAnalysis.recommendation}</span>
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Feasibility Score */}
+                  {/* Feasibility Score - from previous implementation consistency */}
                   {report.feasibility && (
                     <div className="bg-green-50 rounded-lg p-3 mb-3">
-                      <h4 className="font-medium text-green-900 text-sm mb-2">Feasibility Analysis</h4>
-                      <div className="space-y-1 text-xs">
-                        <div className="flex justify-between">
-                          <span>Score:</span>
-                          <span className="font-medium">{report.feasibility.feasibilityScore}%</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Temp Reduction:</span>
-                          <span className="font-medium">{report.feasibility.temperatureReduction}°C</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Timeline:</span>
-                          <span className="font-medium">{report.feasibility.timeline}</span>
-                        </div>
+                      <h4 className="font-medium text-green-900 text-sm mb-2">Feasibility</h4>
+                      <div className="flex justify-between text-xs">
+                        <span>Score:</span>
+                        <span className="font-medium">{report.feasibility.feasibilityScore}%</span>
                       </div>
                     </div>
                   )}
+
                 </div>
 
                 {/* Actions */}
@@ -299,11 +283,10 @@ const CommunityVoting = () => {
                   <div className="flex items-center justify-between">
                     <button
                       onClick={() => handleUpvote(report.id)}
-                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                        report.upvotedBy?.includes(user?.uid)
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${report.upvotedBy?.includes(user?.uid)
                           ? 'bg-green-600 text-white'
                           : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                      }`}
+                        }`}
                     >
                       <ThumbsUp className="w-4 h-4" />
                       <span className="text-sm font-medium">{report.upvotes || 0}</span>

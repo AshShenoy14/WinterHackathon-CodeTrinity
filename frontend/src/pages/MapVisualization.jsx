@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker, LayerGroup, LayersControl } from 'react-leaflet';
-import { db } from '../services/firebase';
-import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
-import { Icon, divIcon } from 'leaflet';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker, LayerGroup } from 'react-leaflet';
+import { reportsAPI } from '../services/api';
+import { divIcon, Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   TreePine,
   Thermometer,
   AlertTriangle,
   CheckCircle,
-  TrendingUp,
-  Users
 } from 'lucide-react';
 
 // Fix for default markers in react-leaflet
@@ -29,53 +26,51 @@ const MapVisualization = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch real-time reports from Firestore
-    const q = query(
-      collection(db, 'reports'),
-      orderBy('createdAt', 'desc'),
-      limit(100)
-    );
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        // Fetch reports using the API Client (supports mock fallback)
+        const response = await reportsAPI.getAll({ limit: 100 });
+        const reportsData = response.reports || [];
+        setReports(reportsData);
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsData);
+        // Calculate Heat Zones from 'heat_hotspot' reports
+        const newHeatZones = reportsData
+          .filter(r => r.reportType === 'heat_hotspot')
+          .map(r => ({
+            id: r.id,
+            lat: r.location.lat,
+            lng: r.location.lng,
+            intensity: 0.8, // Default intensity
+            radius: 300 // Default radius
+          }));
+        setHeatZones(newHeatZones);
 
-      // Calculate Heat Zones from 'heat_hotspot' reports
-      const newHeatZones = reportsData
-        .filter(r => r.reportType === 'heat_hotspot')
-        .map(r => ({
-          id: r.id,
-          lat: r.location.lat,
-          lng: r.location.lng,
-          intensity: 0.8, // Default intensity
-          radius: 300 // Default radius
-        }));
-      setHeatZones(newHeatZones);
+        // Calculate Green Zones from completed/implemented projects
+        const newGreenZones = reportsData
+          .filter(r => r.status === 'implemented' || r.status === 'completed' || r.reportType === 'tree_loss' && r.status === 'approved')
+          .map(r => ({
+            id: r.id,
+            lat: r.location.lat,
+            lng: r.location.lng,
+            coverage: 0.7, // Default coverage
+            radius: 200 // Default radius
+          }));
+        setGreenZones(newGreenZones);
 
-      // Calculate Green Zones from completed/implemented projects
-      // assuming they contribute to green cover
-      const newGreenZones = reportsData
-        .filter(r => r.status === 'implemented' || r.status === 'completed')
-        .map(r => ({
-          id: r.id,
-          lat: r.location.lat,
-          lng: r.location.lng,
-          coverage: 0.7, // Default coverage
-          radius: 200 // Default radius
-        }));
-      setGreenZones(newGreenZones);
+      } catch (error) {
+        console.error("Failed to load map data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    fetchData();
   }, []);
 
   const getReportIcon = (type) => {
     const iconConfig = {
+      unused_space: { color: 'text-orange-600', icon: '🏚️' }, // mapped from vacant_land
       vacant_land: { color: 'text-orange-600', icon: '🏚️' },
       tree_loss: { color: 'text-red-600', icon: '🌳' },
       heat_hotspot: { color: 'text-red-700', icon: '🔥' }
@@ -109,7 +104,7 @@ const MapVisualization = () => {
 
   const filteredReports = reports.filter(report => {
     if (selectedLayer === 'all') return true;
-    return report.type === selectedLayer;
+    return report.reportType === selectedLayer;
   });
 
   if (loading) {
@@ -145,7 +140,7 @@ const MapVisualization = () => {
                 className="px-3 py-1 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value="all">All Reports</option>
-                <option value="vacant_land">Vacant Land</option>
+                <option value="unused_space">Vacant Land</option>
                 <option value="tree_loss">Tree Loss</option>
                 <option value="heat_hotspot">Heat Hotspots</option>
               </select>
@@ -173,7 +168,7 @@ const MapVisualization = () => {
       {/* Map */}
       <div className="relative">
         <MapContainer
-          center={[40.7128, -74.0060]}
+          center={[12.9716, 77.5946]} // Default to Bangalore (or general India coordinates)
           zoom={12}
           style={{ height: 'calc(100vh - 200px)', width: '100%' }}
         >
@@ -238,23 +233,23 @@ const MapVisualization = () => {
               <Marker
                 key={report.id}
                 position={[report.location.lat, report.location.lng]}
-                icon={getReportIcon(report.type)}
+                icon={getReportIcon(report.reportType)}
               >
                 <Popup>
                   <div className="text-sm max-w-xs">
                     <h3 className="font-semibold capitalize">
-                      {report.type.replace('_', ' ')}
+                      {report.reportType.replace('_', ' ')}
                     </h3>
                     <p className="text-gray-600 mt-1">{report.description}</p>
                     <div className="mt-2 space-y-1">
                       <p className="text-xs text-gray-500">
-                        <strong>Address:</strong> {report.address}
+                        <strong>Address:</strong> {report.location.address}
                       </p>
                       <p className="text-xs text-gray-500">
                         <strong>Status:</strong>
                         <span className={`ml-1 px-2 py-1 rounded text-xs ${report.status === 'approved' ? 'bg-green-100 text-green-800' :
-                            report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                              'bg-gray-100 text-gray-800'
+                          report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-gray-100 text-gray-800'
                           }`}>
                           {report.status}
                         </span>
@@ -262,11 +257,16 @@ const MapVisualization = () => {
                       <p className="text-xs text-gray-500">
                         <strong>Upvotes:</strong> {report.upvotes || 0}
                       </p>
-                      {report.feasibility && (
-                        <p className="text-xs text-gray-500">
-                          <strong>Feasibility:</strong> {report.feasibility.feasibilityScore}%
-                        </p>
+
+                      {/* AI Analysis in Popup */}
+                      {report.aiAnalysis && (
+                        <div className="mt-2 p-2 bg-blue-50 rounded border border-blue-100">
+                          <p className="text-xs font-semibold text-blue-800 mb-1">🤖 AI Analysis</p>
+                          <p className="text-xs text-blue-700">Risk: {report.aiAnalysis.riskLevel}</p>
+                          <p className="text-xs text-blue-600 truncate">{report.aiAnalysis.recommendation}</p>
+                        </div>
                       )}
+
                     </div>
                     {report.imageUrl && (
                       <img
@@ -284,7 +284,7 @@ const MapVisualization = () => {
       </div>
 
       {/* Stats Panel */}
-      <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-xs">
+      <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-xs z-[400]">
         <h3 className="font-semibold text-gray-800 mb-3">Map Statistics</h3>
         <div className="space-y-2 text-sm">
           <div className="flex items-center justify-between">

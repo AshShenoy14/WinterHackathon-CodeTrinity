@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../services/firebase';
+import { reportsAPI, partnersAPI } from '../services/api';
 import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
   doc,
-  updateDoc,
-  where,
-  getDocs
+  updateDoc
 } from 'firebase/firestore';
+// Note: We're keeping firebase imports for update operations unless we strictly move them to api.js as well.
+// For now, reads are via API, writes can still be via API or mixed if simple. 
+// Given the user wants consistent data, let's use API for Reads. 
+// The API client I made has helpers for everything.
+
 import {
   Users,
   Building,
@@ -27,8 +26,6 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-import { partnersAPI } from '../services/api';
-
 const CollaborationDashboard = () => {
   const { user } = useAuth();
   const [reports, setReports] = useState([]);
@@ -38,54 +35,52 @@ const CollaborationDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'reports'),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsData);
-
-      // Filter projects based on status
-      const projectsData = reportsData.filter(report =>
-        report.status === 'approved' || report.status === 'in_progress'
-      );
-      setProjects(projectsData);
-    });
-
-    // Fetch partners data
-    const fetchPartners = async () => {
+    const fetchData = async () => {
       try {
-        const response = await partnersAPI.getAll();
-        setPartners(response.partners || []);
+        setLoading(true);
+        const [reportsResponse, partnersResponse] = await Promise.all([
+          reportsAPI.getAll({ limit: 100 }),
+          partnersAPI.getAll()
+        ]);
+
+        const reportsData = reportsResponse.reports || [];
+        setReports(reportsData);
+
+        // Filter projects based on status
+        const projectsData = reportsData.filter(report =>
+          report.status === 'approved' || report.status === 'in_progress'
+        );
+        setProjects(projectsData);
+        setPartners(partnersResponse.partners || []);
+
       } catch (error) {
-        console.error('Error fetching partners:', error);
-        toast.error('Failed to load partners data');
+        console.error("Failed to load collaboration data", error);
+        toast.error("Failed to load dashboard data");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchPartners();
-
-    return unsubscribe;
+    fetchData();
   }, []);
 
   const handleProjectApproval = async (reportId, approvalStatus) => {
     try {
-      const reportRef = doc(db, 'reports', reportId);
-      await updateDoc(reportRef, {
+      // Use API for update
+      await reportsAPI.updateStatus(reportId, {
         status: approvalStatus,
-        approvedBy: user.uid,
-        approvedAt: new Date(),
-        updatedAt: new Date()
+        approvedBy: user?.uid
       });
 
       toast.success(`Project ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
+
+      // Update local state to reflect change immediately
+      setReports(prev => prev.map(r => r.id === reportId ? { ...r, status: approvalStatus } : r));
+
+      // Re-filter projects logic
+      const updatedReports = reports.map(r => r.id === reportId ? { ...r, status: approvalStatus } : r);
+      setProjects(updatedReports.filter(r => r.status === 'approved' || r.status === 'in_progress'));
+
     } catch (error) {
       toast.error('Error updating project status');
       console.error(error);
@@ -208,8 +203,8 @@ const CollaborationDashboard = () => {
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
                   className={`py-4 px-1 border-b-2 font-medium text-sm ${selectedTab === tab
-                      ? 'border-green-500 text-green-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-green-500 text-green-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1).replace('_', ' ')}
@@ -240,12 +235,12 @@ const CollaborationDashboard = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">
-                              {project.type === 'vacant_land' ? '🏚️' :
-                                project.type === 'tree_loss' ? '🌳' :
-                                  project.type === 'heat_hotspot' ? '🔥' : '📍'}
+                              {project.reportType === 'vacant_land' ? '🏚️' :
+                                project.reportType === 'tree_loss' ? '🌳' :
+                                  project.reportType === 'heat_hotspot' ? '🔥' : '📍'}
                             </span>
                             <h4 className="font-medium text-gray-900 capitalize">
-                              {project.type?.replace('_', ' ')}
+                              {project.reportType?.replace('_', ' ')}
                             </h4>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(project.status)}`}>
                               {project.status?.replace('_', ' ')}
@@ -253,19 +248,19 @@ const CollaborationDashboard = () => {
                           </div>
                           <p className="text-gray-600 text-sm mb-2">{project.description}</p>
                           <p className="text-xs text-gray-500 mb-2">
-                            <strong>Location:</strong> {project.address}
+                            <strong>Location:</strong> {project.location?.address || project.address}
                           </p>
-                          {project.feasibility && (
+                          {project.aiAnalysis && (
                             <div className="bg-blue-50 rounded p-2 mb-2">
                               <p className="text-xs text-blue-900">
-                                <strong>Feasibility:</strong> {project.feasibility.feasibilityScore}% |
-                                <strong> Impact:</strong> {project.feasibility.temperatureReduction}°C reduction
+                                <strong>Start AI Analysis:</strong> Risk: {project.aiAnalysis.riskLevel} |
+                                <strong> Recommendation:</strong> {project.aiAnalysis.recommendation}
                               </p>
                             </div>
                           )}
                           <div className="flex items-center space-x-4 text-xs text-gray-500">
                             <span><strong>Upvotes:</strong> {project.upvotes || 0}</span>
-                            <span><strong>Submitted:</strong> {project.createdAt?.toDate?.()?.toLocaleDateString()}</span>
+                            <span><strong>Submitted:</strong> {new Date(project.createdAt?.seconds ? project.createdAt.seconds * 1000 : project.createdAt).toLocaleDateString()}</span>
                             <span><strong>By:</strong> {project.userEmail?.split('@')[0]}</span>
                           </div>
                         </div>
@@ -303,8 +298,8 @@ const CollaborationDashboard = () => {
                     <div key={project.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium text-gray-900 capitalize">{project.type?.replace('_', ' ')}</h4>
-                          <p className="text-sm text-gray-600">{project.address}</p>
+                          <h4 className="font-medium text-gray-900 capitalize">{project.reportType?.replace('_', ' ')}</h4>
+                          <p className="text-sm text-gray-600">{project.location?.address || project.address}</p>
                         </div>
                         <div className="flex space-x-2">
                           <button className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
@@ -334,8 +329,8 @@ const CollaborationDashboard = () => {
                     <div key={project.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium text-gray-900 capitalize">{project.type?.replace('_', ' ')}</h4>
-                          <p className="text-sm text-gray-600">{project.address}</p>
+                          <h4 className="font-medium text-gray-900 capitalize">{project.reportType?.replace('_', ' ')}</h4>
+                          <p className="text-sm text-gray-600">{project.location?.address || project.address}</p>
                           <div className="mt-2">
                             <div className="flex items-center space-x-2">
                               <div className="flex-1 bg-gray-200 rounded-full h-2">

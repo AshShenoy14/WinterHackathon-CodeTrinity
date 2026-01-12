@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../services/firebase';
-import { 
-  collection, 
-  query, 
-  orderBy, 
-  onSnapshot
-} from 'firebase/firestore';
-import { 
-  TreePine, 
-  TrendingUp, 
+import { reportsAPI } from '../services/api';
+import {
+  TreePine,
+  TrendingUp,
   Thermometer,
   Droplets,
   Users,
@@ -24,8 +18,6 @@ import {
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar, PieChart, Pie, Cell } from 'recharts';
 
 const ImpactMonitoring = () => {
-  // Removed unused 'user' and 'reports' variables to fix ESLint errors
-  // const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [impactData, setImpactData] = useState({
     treesPlanted: 0,
@@ -39,9 +31,9 @@ const ImpactMonitoring = () => {
   const [regionalData, setRegionalData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Only declare each function once, above useEffect
   const calculateImpactMetrics = (reportsData) => {
-    const completedProjects = reportsData.filter(r => r.status === 'completed');
+    const completedProjects = reportsData.filter(r => r.status === 'completed' || r.status === 'implemented');
+    // Simulate metrics based on reports
     const treesPlanted = completedProjects.length * 15;
     const greenCoverIncrease = completedProjects.length * 0.5;
     const heatReduction = completedProjects.length * 0.8;
@@ -67,14 +59,23 @@ const ImpactMonitoring = () => {
       date.setHours(0, 0, 0, 0);
       const nextDate = new Date(date);
       nextDate.setMonth(nextDate.getMonth() + 1);
+
       const monthProjects = reportsData.filter(report => {
-        const reportDate = report.createdAt?.toDate();
+        let reportDate;
+        if (report.createdAt && report.createdAt.seconds) { // Firestore Timestamp
+          reportDate = new Date(report.createdAt.seconds * 1000);
+        } else if (report.createdAt) { // ISO String
+          reportDate = new Date(report.createdAt);
+        } else {
+          return false;
+        }
         return reportDate >= date && reportDate < nextDate;
       });
+
       monthlyData.push({
         month: date.toLocaleDateString('en', { month: 'short' }),
         projects: monthProjects.length,
-        trees: monthProjects.length * 15,
+        trees: monthProjects.length * 15, // Suggested multiplier
         heatReduction: monthProjects.length * 0.8,
         upvotes: monthProjects.reduce((sum, r) => sum + (r.upvotes || 0), 0)
       });
@@ -83,6 +84,7 @@ const ImpactMonitoring = () => {
   };
 
   const prepareRegionalData = (reportsData) => {
+    // Basic hardcoded simulation for now, could be dynamic based on 'zone' in report
     const regions = [
       { name: 'North Zone', projects: 12, trees: 180, heatReduction: 9.6, color: '#10b981' },
       { name: 'South Zone', projects: 8, trees: 120, heatReduction: 6.4, color: '#3b82f6' },
@@ -94,22 +96,22 @@ const ImpactMonitoring = () => {
   };
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'reports'),
-      orderBy('createdAt', 'desc')
-    );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsData);
-      calculateImpactMetrics(reportsData);
-      prepareTimeSeriesData(reportsData);
-      prepareRegionalData(reportsData);
-      setLoading(false);
-    });
-    return unsubscribe;
+    const fetchReports = async () => {
+      try {
+        const response = await reportsAPI.getAll({ limit: 100 });
+        const reportsData = response.reports || [];
+        setReports(reportsData);
+        calculateImpactMetrics(reportsData);
+        prepareTimeSeriesData(reportsData);
+        prepareRegionalData(reportsData);
+      } catch (error) {
+        console.error("Failed to load impact data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
   }, []);
 
 
@@ -171,7 +173,7 @@ const ImpactMonitoring = () => {
               <div className="p-3 bg-red-100 rounded-full">
                 <Thermometer className="w-6 h-6 text-red-600" />
               </div>
-              <span className="text-2xl font-bold text-red-600">-{impactData.heatReduction}°C</span>
+              <span className="text-2xl font-bold text-red-600">-{impactData.heatReduction.toFixed(1)}°C</span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">Heat Reduction</h3>
             <p className="text-xs text-gray-500 mt-1">Average impact</p>

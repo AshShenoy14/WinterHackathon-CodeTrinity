@@ -1,7 +1,7 @@
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://us-central1-greenpulse.cloudfunctions.net';
 
-// Mock Data for Demo/Fallback
+// Mock Data for Demo/Fallback - Mutable for session persistence
 const MOCK_DATA = {
   reports: [
     {
@@ -18,7 +18,8 @@ const MOCK_DATA = {
         riskLevel: 'High',
         recommendation: 'Plant urban canopy',
         environmentalImpact: 'Significant reduction in local temp expected'
-      }
+      },
+      imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=600&auto=format&fit=crop'
     },
     {
       id: 'mock-2',
@@ -34,7 +35,8 @@ const MOCK_DATA = {
         riskLevel: 'Critical',
         recommendation: 'Immediate reforestation',
         environmentalImpact: 'Loss of biodiversity'
-      }
+      },
+      imageUrl: 'https://images.unsplash.com/photo-1623577772765-a89c773b063d?q=80&w=600&auto=format&fit=crop'
     },
     {
       id: 'mock-3',
@@ -50,7 +52,8 @@ const MOCK_DATA = {
         riskLevel: 'Low',
         recommendation: 'Community gardening',
         environmentalImpact: 'Positive social and environmental impact'
-      }
+      },
+      imageUrl: 'https://plus.unsplash.com/premium_photo-1664303499312-917c50e4047b?q=80&w=600&auto=format&fit=crop'
     }
   ],
   stats: {
@@ -108,21 +111,50 @@ class ApiClient {
       // Fallback to Mock Data (Alternative)
       if (this.useMock) {
         console.warn('Falling back to MOCK DATA for:', endpoint);
-        return this.getMockResponse(endpoint, options);
+        return await this.getMockResponse(endpoint, options);
       }
 
       throw error;
     }
   }
 
-  getMockResponse(endpoint, options) {
+  async getMockResponse(endpoint, options) {
+    // Simulate network delay for realism
+    await new Promise(resolve => setTimeout(resolve, 600));
+
     // Return appropriate mock data based on endpoint
     if (endpoint.includes('reports-list')) {
-      return { reports: MOCK_DATA.reports, pagination: { page: 1, limit: 10, total: 3, pages: 1 } };
+      return { reports: MOCK_DATA.reports, pagination: { page: 1, limit: 10, total: MOCK_DATA.reports.length, pages: 1 } };
     }
+
     if (endpoint.includes('reports-create')) {
-      return { id: 'mock-new-' + Date.now(), message: 'Report created (MOCK)', ...JSON.parse(options.body || '{}') };
+      const body = JSON.parse(options.body || '{}');
+      const newReport = {
+        id: 'mock-new-' + Date.now(),
+        ...body,
+        status: 'pending',
+        upvotes: 0,
+        createdAt: new Date().toISOString(),
+        aiAnalysis: {
+          riskLevel: 'Analyzing...',
+          recommendation: 'AI analysis pending',
+          environmentalImpact: 'Calculating impact...'
+        }
+      };
+
+      // Simulate Async AI processing updating the report after a few seconds
+      setTimeout(() => {
+        newReport.aiAnalysis = {
+          riskLevel: 'Medium',
+          recommendation: 'Recommended for green cover expansion',
+          environmentalImpact: 'Moderate cooling effect expected'
+        };
+      }, 2000);
+
+      MOCK_DATA.reports.unshift(newReport); // Add to beginning
+      return newReport;
     }
+
     if (endpoint.includes('ai-analyze')) {
       return { riskLevel: 'Predicted', recommendation: 'Mock AI Recommendation', confidence: 0.95 };
     }
