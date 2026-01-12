@@ -1,13 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../services/firebase';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
-} from 'firebase/auth';
+import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -25,33 +17,41 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // Initialize auth with stored token
+    const isAuth = authAPI.initializeAuth();
+    if (isAuth) {
+      loadUserProfile();
+    } else {
       setLoading(false);
-    });
-
-    return unsubscribe;
+    }
   }, []);
 
-  const signInWithGoogle = async () => {
+  const loadUserProfile = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      toast.success('Successfully signed in!');
+      const profile = await authAPI.getProfile();
+      setUser(profile);
     } catch (error) {
-      toast.error('Error signing in with Google');
-      console.error(error);
+      console.error('Failed to load user profile:', error);
+      authAPI.logout();
+    } finally {
+      setLoading(false);
     }
   };
 
-  const signUp = async (email, password, role = 'citizen') => {
+  const signUp = async (email, password, fullName, role = 'citizen') => {
     try {
-      const result = await createUserWithEmailAndPassword(auth, email, password);
-      // Store user role in Firestore
+      const response = await authAPI.register({
+        email,
+        password,
+        fullName,
+        role
+      });
+      
+      setUser(response.user);
       toast.success('Account created successfully!');
-      return result;
+      return response;
     } catch (error) {
-      toast.error('Error creating account');
+      toast.error(error.message || 'Error creating account');
       console.error(error);
       throw error;
     }
@@ -59,10 +59,16 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const response = await authAPI.login({
+        email,
+        password
+      });
+      
+      setUser(response.user);
       toast.success('Successfully signed in!');
+      return response;
     } catch (error) {
-      toast.error('Error signing in');
+      toast.error(error.message || 'Error signing in');
       console.error(error);
       throw error;
     }
@@ -70,7 +76,8 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      authAPI.logout();
+      setUser(null);
       toast.success('Successfully signed out!');
     } catch (error) {
       toast.error('Error signing out');
@@ -78,13 +85,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      await authAPI.updateProfile(profileData);
+      if (user) {
+        setUser({ ...user, ...profileData });
+      }
+      toast.success('Profile updated successfully!');
+    } catch (error) {
+      toast.error(error.message || 'Error updating profile');
+      console.error(error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
-    signInWithGoogle,
     signUp,
     signIn,
     signOut,
-    loading
+    updateProfile,
+    loading,
+    isAuthenticated: !!user,
+    role: user?.role || 'citizen'
   };
 
   return (

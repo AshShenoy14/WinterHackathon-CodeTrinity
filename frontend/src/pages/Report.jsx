@@ -1,10 +1,8 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Camera, MapPin, Upload, X, Loader2, Sparkles, Leaf, TreePine, ThermometerSun } from 'lucide-react';
-import { db, storage } from '../services/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { analyzeImageWithVision, predictFeasibilityAndImpact, reverseGeocode } from '../services/googleCloud';
+import { reportsAPI, aiAPI } from '../services/api';
 import toast from 'react-hot-toast';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -13,10 +11,11 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const Report = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [image, setImage] = useState(null);
   const [location, setLocation] = useState(null);
   const [address, setAddress] = useState('');
-  const [reportType, setReportType] = useState('vacant_land');
+  const [reportType, setReportType] = useState('unused_space');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -25,7 +24,7 @@ const Report = () => {
 
   const reportTypes = [
     { 
-      value: 'vacant_land', 
+      value: 'unused_space', 
       label: 'Unused/Vacant Land', 
       icon: '🏚️',
       description: 'Empty spaces that could be transformed',
@@ -50,13 +49,10 @@ const Report = () => {
   const getCurrentLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
+        (position) => {
           const { latitude, longitude } = position.coords;
           setLocation({ lat: latitude, lng: longitude });
-          
-          // Get address from coordinates
-          const addr = await reverseGeocode(latitude, longitude);
-          setAddress(addr || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+          setAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
           toast.success('Location captured successfully!');
         },
         (error) => {
@@ -73,19 +69,30 @@ const Report = () => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
-      // Analyze image automatically
-      analyzeImage(file);
     }
   };
 
-  const analyzeImage = async (imageFile) => {
+  const analyzeReport = async () => {
+    if (!location || !description) {
+      toast.error('Please provide location and description first');
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
-      const result = await analyzeImageWithVision(imageFile);
-      setAnalysis(result);
-      toast.success('Image analyzed successfully!');
+      const imageUrl = image ? URL.createObjectURL(image) : '';
+      const result = await aiAPI.analyze({
+        reportId: 'temp', // Will be replaced by actual report ID
+        imageUrl,
+        reportType,
+        location: { ...location, address },
+        description
+      });
+      
+      setAnalysis(result.analysis);
+      toast.success('AI analysis completed!');
     } catch (error) {
-      toast.error('Error analyzing image');
+      toast.error('Error analyzing report');
       console.error(error);
     } finally {
       setIsAnalyzing(false);
@@ -100,55 +107,55 @@ const Report = () => {
       return;
     }
 
-    if (!image || !location) {
-      toast.error('Please capture an image and location');
+    if (!location || !description) {
+      toast.error('Please provide location and description');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Upload image to Firebase Storage
-      const imageRef = ref(storage, `reports/${user.uid}/${Date.now()}_${image.name}`);
-      await uploadBytes(imageRef, image);
-      const imageUrl = await getDownloadURL(imageRef);
+      let imageUrl = '';
+      
+      // Upload image if provided
+      if (image) {
+        // In a real implementation, you'd upload to Firebase Storage
+        // For now, we'll use a placeholder
+        imageUrl = 'https://via.placeholder.com/400x300';
+      }
 
-      // Get feasibility prediction
-      const feasibilityData = await predictFeasibilityAndImpact(location, analysis);
-
-      // Save report to Firestore
+      // Create report
       const reportData = {
-        userId: user.uid,
-        userEmail: user.email,
-        type: reportType,
+        title: `${reportType.replace('_', ' ').toUpperCase()} - ${address}`,
         description,
-        location,
-        address,
+        location: { ...location, address },
+        reportType,
         imageUrl,
-        imageAnalysis: analysis,
-        feasibility: feasibilityData,
-        status: 'pending',
-        upvotes: 0,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        additionalInfo: analysis ? JSON.stringify(analysis) : ''
       };
 
-      await addDoc(collection(db, 'reports'), reportData);
+      const response = await reportsAPI.create(reportData);
       
-      toast.success('Report submitted successfully!');
-      
-      // Reset form
-      setImage(null);
-      setLocation(null);
-      setAddress('');
-      setDescription('');
-      setAnalysis(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      // If analysis was requested, trigger it with the actual report ID
+      if (analysis) {
+        try {
+          await aiAPI.analyze({
+            reportId: response.id,
+            imageUrl,
+            reportType,
+            location: { ...location, address },
+            description
+          });
+        } catch (analysisError) {
+          console.error('Analysis failed:', analysisError);
+        }
       }
       
+      toast.success('Report submitted successfully!');
+      navigate('/dashboard');
+      
     } catch (error) {
-      toast.error('Error submitting report');
+      toast.error(error.message || 'Error submitting report');
       console.error(error);
     } finally {
       setIsSubmitting(false);

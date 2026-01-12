@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn, Github, Twitter, ArrowRight } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,16 +13,20 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      console.log('Login data:', formData);
-      setIsLoading(false);
+    
+    try {
+      await signIn(formData.email, formData.password);
       navigate('/dashboard');
-    }, 1500);
+    } catch (error) {
+      // Error is already handled by the auth context
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e) => {

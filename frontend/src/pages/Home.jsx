@@ -71,7 +71,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-5 font-sans">
       {/* Hero Section */}
       <section className="relative overflow-hidden min-h-[700px] flex items-center justify-center bg-gradient-to-br from-primary-900 via-primary-800 to-secondary-900 text-white pt-24 pb-20">
 
@@ -82,16 +82,16 @@ const Home = () => {
         </div>
 
         <img
-          src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1600&q=80"
+          src="/bg_image.png"
           alt="Green landscape"
-          className="absolute inset-0 w-full h-full object-cover object-center opacity-30 mix-blend-overlay"
+          className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
         />
 
         <Container className="relative z-10">
           <div className="max-w-5xl mx-auto text-center px-4">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-8 animate-fade-in">
               <span className="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
-              <span className="text-sm font-medium tracking-wide">Winter Hackathon 2024</span>
+
             </div>
 
             <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-8 leading-tight animate-slide-up">
