@@ -14,6 +14,7 @@ import ImpactMonitoring from './pages/ImpactMonitoring';
 import Profile from './pages/Profile';
 import PageNotFound from './pages/PageNotFound';
 import IntroVideo from './components/IntroVideo';
+import ARView from './pages/ARView';
 
 function App() {
   const [showIntro, setShowIntro] = useState(true);
@@ -37,6 +38,7 @@ function App() {
             <Route path="/collaboration" element={<CollaborationDashboard />} />
             <Route path="/impact" element={<ImpactMonitoring />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/ar-view" element={<ARView />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Layout>
@@ -46,3 +48,4 @@ function App() {
 }
 
 export default App;
+```

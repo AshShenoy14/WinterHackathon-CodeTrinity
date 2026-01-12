@@ -346,6 +346,31 @@ const Dashboard = () => {
                                 ))}
                               </div>
                             )}
+
+                            {/* Advanced AI: Species & Carbon */}
+                            {(report.aiAnalysis.native_species_recommendations || report.aiAnalysis.estimated_carbon_offset) && (
+                              <div className="mt-2 pt-2 border-t border-gray-100 grid grid-cols-1 gap-2">
+                                {report.aiAnalysis.native_species_recommendations && (
+                                  <div className="flex flex-col">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Recommended Flora</span>
+                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                      {report.aiAnalysis.native_species_recommendations.map((species, i) => (
+                                        <span key={i} className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] border border-green-100 flex items-center">
+                                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1"></span>
+                                          {species}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {report.aiAnalysis.estimated_carbon_offset && (
+                                  <div className="flex items-center justify-between bg-emerald-50/50 p-1.5 rounded border border-emerald-100">
+                                    <span className="text-[10px] font-bold text-gray-500 uppercase">Est. Carbon Offset</span>
+                                    <span className="text-xs font-bold text-emerald-700">{report.aiAnalysis.estimated_carbon_offset}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
 

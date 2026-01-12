@@ -92,7 +92,9 @@ Task:
 2. Impact: Cooling effect?
 3. Ownership: Public or Private (guess based on visual cues)?
 4. Category: confirm report type.
-5. Summary: 1 sentence summary.
+5. Species: Recommend 3 native plant/tree species suitable for this specific location/climate.
+6. Carbon: Estimate CO2 sequestration potential (kg/year) if greened.
+7. Summary: 1 sentence summary.
 
 Output JSON scheme:
 {
@@ -101,6 +103,8 @@ Output JSON scheme:
   "land_ownership_estimate": "Public" | "Private" | "Unknown",
   "suggested_category": "tree_loss" | "heat_hotspot" | "unused_space",
   "cooling_impact": "High" | "Medium" | "Low",
+  "native_species_recommendations": ["string", "string", "string"],
+  "estimated_carbon_offset": "string" (e.g. "25 kg/year"),
   "summary": "string",
   "recommendations": ["string"]
 }
@@ -132,6 +136,8 @@ Output JSON scheme:
             land_ownership_estimate: "Unknown",
             suggested_category: reportType,
             cooling_impact: "Medium",
+            native_species_recommendations: ["Neem", "Peepal", "Ashoka"],
+            estimated_carbon_offset: "Unknown",
             summary: "Analysis pending manual review.",
             recommendations: ["Site check required"],
             error: 'AI analysis failed'
