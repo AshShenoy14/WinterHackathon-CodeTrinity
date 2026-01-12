@@ -5,9 +5,7 @@ import {
   collection, 
   query, 
   orderBy, 
-  onSnapshot,
-  where,
-  getDocs
+  onSnapshot
 } from 'firebase/firestore';
 import { 
   TreePine, 
@@ -26,7 +24,8 @@ import {
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar, PieChart, Pie, Cell } from 'recharts';
 
 const ImpactMonitoring = () => {
-  const { user } = useAuth();
+  // Removed unused 'user' and 'reports' variables to fix ESLint errors
+  // const { user } = useAuth();
   const [reports, setReports] = useState([]);
   const [impactData, setImpactData] = useState({
     treesPlanted: 0,
@@ -40,39 +39,15 @@ const ImpactMonitoring = () => {
   const [regionalData, setRegionalData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const q = query(
-      collection(db, 'reports'),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsData);
-      calculateImpactMetrics(reportsData);
-      prepareTimeSeriesData(reportsData);
-      prepareRegionalData(reportsData);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
+  // Only declare each function once, above useEffect
   const calculateImpactMetrics = (reportsData) => {
     const completedProjects = reportsData.filter(r => r.status === 'completed');
-    const approvedProjects = reportsData.filter(r => r.status === 'approved');
-    
-    // Calculate impact metrics based on projects
-    const treesPlanted = completedProjects.length * 15; // Average 15 trees per project
-    const greenCoverIncrease = completedProjects.length * 0.5; // Average 0.5 acres per project
-    const heatReduction = completedProjects.length * 0.8; // Average 0.8°C reduction per project
-    const co2Absorbed = treesPlanted * 48; // 48 lbs CO2 per tree per year
-    const waterConserved = completedProjects.length * 1000; // 1000 gallons per project
+    const treesPlanted = completedProjects.length * 15;
+    const greenCoverIncrease = completedProjects.length * 0.5;
+    const heatReduction = completedProjects.length * 0.8;
+    const co2Absorbed = treesPlanted * 48;
+    const waterConserved = completedProjects.length * 1000;
     const communityEngagement = reportsData.reduce((sum, r) => sum + (r.upvotes || 0), 0);
-
     setImpactData({
       treesPlanted,
       greenCoverIncrease,
@@ -84,22 +59,18 @@ const ImpactMonitoring = () => {
   };
 
   const prepareTimeSeriesData = (reportsData) => {
-    // Generate monthly impact data for the last 12 months
     const monthlyData = [];
     for (let i = 11; i >= 0; i--) {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       date.setDate(1);
       date.setHours(0, 0, 0, 0);
-      
       const nextDate = new Date(date);
       nextDate.setMonth(nextDate.getMonth() + 1);
-      
       const monthProjects = reportsData.filter(report => {
         const reportDate = report.createdAt?.toDate();
         return reportDate >= date && reportDate < nextDate;
       });
-      
       monthlyData.push({
         month: date.toLocaleDateString('en', { month: 'short' }),
         projects: monthProjects.length,
@@ -112,7 +83,6 @@ const ImpactMonitoring = () => {
   };
 
   const prepareRegionalData = (reportsData) => {
-    // Group reports by region (mock regional data)
     const regions = [
       { name: 'North Zone', projects: 12, trees: 180, heatReduction: 9.6, color: '#10b981' },
       { name: 'South Zone', projects: 8, trees: 120, heatReduction: 6.4, color: '#3b82f6' },
@@ -122,6 +92,26 @@ const ImpactMonitoring = () => {
     ];
     setRegionalData(regions);
   };
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'reports'),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const reportsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setReports(reportsData);
+      calculateImpactMetrics(reportsData);
+      prepareTimeSeriesData(reportsData);
+      prepareRegionalData(reportsData);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
 
   const radialData = [
     { name: 'Trees', value: Math.min((impactData.treesPlanted / 1000) * 100, 100), fill: '#10b981' },

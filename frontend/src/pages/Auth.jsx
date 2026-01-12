@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Eye, EyeOff, Mail, Lock, User, Google } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -234,7 +234,15 @@ const Auth = () => {
               onClick={handleGoogleSignIn}
               className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
             >
-              <Google className="h-5 w-5 mr-2" />
+              {/* Google icon SVG fallback */}
+              <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g>
+                  <path d="M21.805 10.023h-9.765v3.977h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.125-2.789-6.125-6.148 0-3.359 2.75-6.148 6.125-6.148 1.922 0 3.211.82 3.953 1.523l2.703-2.633c-1.703-1.57-3.898-2.531-6.656-2.531-5.523 0-10 4.477-10 10s4.477 10 10 10c5.781 0 9.594-4.055 9.594-9.773 0-.656-.07-1.156-.156-1.648z" fill="#FFC107"/>
+                  <path d="M3.152 7.345l3.281 2.406c.891-1.719 2.578-2.953 4.617-2.953 1.328 0 2.516.453 3.453 1.344l2.594-2.594c-1.703-1.57-3.898-2.531-6.656-2.531-3.828 0-7.047 2.477-8.406 5.938l3.117 2.39z" fill="#FF3D00"/>
+                  <path d="M12 22c2.672 0 4.922-.883 6.563-2.406l-3.047-2.492c-.844.594-2.016 1.016-3.516 1.016-2.953 0-5.453-1.992-6.344-4.672l-3.188 2.461c1.531 3.344 4.953 5.593 9.532 5.593z" fill="#4CAF50"/>
+                  <path d="M21.805 10.023h-9.765v3.977h5.617c-.242 1.242-1.484 3.648-5.617 3.648-3.375 0-6.125-2.789-6.125-6.148 0-.547.07-1.078.172-1.578l-3.188-2.461c-.406.812-.656 1.719-.656 2.789 0 5.523 4.477 10 10 10 5.781 0 9.594-4.055 9.594-9.773 0-.656-.07-1.156-.156-1.648z" fill="#1976D2"/>
+                </g>
+              </svg>
               Sign in with Google
             </button>
           </div>
