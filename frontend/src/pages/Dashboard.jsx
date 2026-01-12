@@ -414,6 +414,24 @@ const Dashboard = () => {
                             Global AR View
                           </Button>
                         )}
+
+                        {/* Authority Actions */}
+                        {['authority', 'expert'].includes(role) && ['pending_review', 'pending_approval', 'pending'].includes(report.status) && (
+                          <div className="mt-2 pt-2 border-t border-gray-100 flex flex-col gap-1 w-full">
+                            <Button
+                              size="xs"
+                              className="w-full bg-green-50 text-green-700 hover:bg-green-100 border border-green-200"
+                              onClick={async () => {
+                                try {
+                                  await reportsAPI.updateStatus(report.id, { status: 'approved' });
+                                  loadDashboardData();
+                                } catch (e) { console.error(e); }
+                              }}
+                            >
+                              Approve
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
