@@ -27,6 +27,8 @@ import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import MapView from '../components/MapView';
 import ReportCard from '../components/ReportCard';
+import Card from '../components/ui/Card';
+import StatsCard from '../components/ui/StatsCard';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -148,81 +150,105 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50">
       <Navbar />
       <div className="flex">
         <Sidebar />
         <main className="flex-1 p-6">
           {/* Overview Cards */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
+          <div className="mb-8">
+            <div className="mb-6">
+              <h1 className="text-4xl font-bold text-secondary-900 mb-2 bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+                Dashboard Overview
+              </h1>
+              <p className="text-secondary-600">Monitor your urban greening impact in real-time</p>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Reports</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.totalReports}</p>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <MapPin className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
-              </div>
+              <StatsCard
+                title="Total Reports"
+                value={stats.totalReports}
+                change="+12% from last month"
+                changeType="positive"
+                icon={MapPin}
+                color="primary"
+                trend="This month"
+                animated={true}
+              />
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Approved Projects</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.approvedProjects}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
+              <StatsCard
+                title="Approved Projects"
+                value={stats.approvedProjects}
+                change="+8% from last month"
+                changeType="positive"
+                icon={CheckCircle}
+                color="success"
+                trend="This month"
+                animated={true}
+                className="animation-delay-100"
+              />
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Trees Planted</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.treesPlanted}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <TreePine className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
+              <StatsCard
+                title="Trees Planted"
+                value={stats.treesPlanted}
+                change="+25% from last month"
+                changeType="positive"
+                icon={TreePine}
+                color="success"
+                trend="This month"
+                animated={true}
+                className="animation-delay-200"
+              />
 
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Heat Reduction</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.heatReduction.toFixed(1)}°C</p>
-                  </div>
-                  <div className="p-3 bg-red-100 rounded-full">
-                    <Thermometer className="w-6 h-6 text-red-600" />
-                  </div>
-                </div>
-              </div>
+              <StatsCard
+                title="Heat Reduction"
+                value={`${stats.heatReduction.toFixed(1)}°C`}
+                change="+0.3°C from last month"
+                changeType="positive"
+                icon={Thermometer}
+                color="error"
+                trend="This month"
+                animated={true}
+                className="animation-delay-300"
+              />
             </div>
           </div>
 
           {/* Map Preview */}
           <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Issue Map</h2>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <MapView reports={recentReports} />
-            </div>
+            <Card hover={true} animated={true} className="overflow-hidden">
+              <div className="p-6 border-b border-secondary-200/60">
+                <h2 className="text-xl font-semibold text-secondary-900 flex items-center">
+                  <MapPin className="w-5 h-5 mr-2 text-primary-600" />
+                  Issue Map
+                </h2>
+                <p className="text-sm text-secondary-600 mt-1">Real-time visualization of reported issues</p>
+              </div>
+              <div className="p-4">
+                <MapView reports={recentReports} />
+              </div>
+            </Card>
           </div>
 
           {/* Recent Reports */}
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Reports</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentReports.map((report) => (
-                <ReportCard key={report.id} report={report} />
-              ))}
-            </div>
+            <Card hover={true} animated={true} className="overflow-hidden">
+              <div className="p-6 border-b border-secondary-200/60">
+                <h2 className="text-xl font-semibold text-secondary-900 flex items-center">
+                  <Clock className="w-5 h-5 mr-2 text-primary-600" />
+                  Recent Reports
+                </h2>
+                <p className="text-sm text-secondary-600 mt-1">Latest community submissions</p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {recentReports.map((report) => (
+                    <div key={report.id} className="animate-fade-in animation-delay-100">
+                      <ReportCard report={report} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
           </div>
         </main>
       </div>
