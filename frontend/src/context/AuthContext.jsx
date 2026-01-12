@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { authAPI } from '../services/api';
+import { auth, GoogleAuthProvider, signInWithPopup } from '../services/firebase';
 import toast from 'react-hot-toast';
 
 const AuthContext = createContext();
@@ -46,12 +47,46 @@ export const AuthProvider = ({ children }) => {
         fullName,
         role
       });
-      
+
       setUser(response.user);
       toast.success('Account created successfully!');
       return response;
     } catch (error) {
       toast.error(error.message || 'Error creating account');
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Get the ID token
+      const idToken = await user.getIdToken();
+
+      // You might need to send this token to your backend to create a session or user record
+      // For now, let's assume we just update the local state, or call a backend endpoint
+
+      // Example: Register/Login with backend using the token
+      // const response = await authAPI.googleLogin(idToken);
+      // setUser(response.user);
+
+      // Or just set the user from firebase for now if backend integration isn't ready
+      setUser({
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        role: 'citizen' // default role
+      });
+
+      toast.success('Successfully signed in with Google!');
+      return user;
+    } catch (error) {
+      toast.error(error.message || 'Error signing in with Google');
       console.error(error);
       throw error;
     }
@@ -63,7 +98,7 @@ export const AuthProvider = ({ children }) => {
         email,
         password
       });
-      
+
       setUser(response.user);
       toast.success('Successfully signed in!');
       return response;
@@ -103,6 +138,7 @@ export const AuthProvider = ({ children }) => {
     user,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     updateProfile,
     loading,
