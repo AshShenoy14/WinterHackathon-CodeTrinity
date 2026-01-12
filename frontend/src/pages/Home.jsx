@@ -73,41 +73,29 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden min-h-[600px] flex items-center justify-center bg-gradient-to-br from-green-600 to-emerald-700 text-white pt-24 pb-16 md:pt-32 md:pb-24">
+      <section className="relative overflow-hidden min-h-[600px] flex items-center justify-center bg-gradient-to-br from-green-600 to-emerald-700 text-white pt-24 pb-16 md:pt-32 md:pb-24 animate-fade-in">
         {/* Hero background image with overlay */}
-        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Green landscape" className="absolute inset-0 w-full h-full object-cover object-center opacity-60" />
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Green landscape" className="absolute inset-0 w-full h-full object-cover object-center opacity-60 scale-105" />
         <div className="absolute inset-0 bg-gradient-to-br from-green-700/80 via-emerald-800/60 to-cyan-900/60" />
         <Container>
           <div className="relative z-10 max-w-4xl mx-auto text-center px-4">
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-sm font-medium mb-6 animate-float shadow-lg">
-              <Zap className="w-4 h-4 mr-2 text-yellow-300" />
-              <span>Join the movement for a greener planet</span>
-            </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 drop-shadow-lg">
-              Turn Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-200 via-emerald-200 to-cyan-200">
-                Environmental Concerns
-              </span> Into Action
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6 drop-shadow-lg animate-fade-in-down">
+              Empowering Communities for a <span className="bg-gradient-to-r from-green-300 via-emerald-200 to-cyan-200 bg-clip-text text-transparent">Greener Tomorrow</span>
             </h1>
-            <p className="text-xl text-green-100 max-w-2xl mx-auto mb-10 drop-shadow">
-              GreenPulse empowers citizens to report environmental issues, track their resolution, and contribute to a sustainable future.
+            <p className="text-lg md:text-xl font-medium mb-8 text-white/90 animate-fade-in-down" style={{ animationDelay: '0.1s', animationFillMode: 'both' }}>
+              Report, track, and resolve environmental issues in your area. Join the movement to make a real impact.
             </p>
-            <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button
-                as={Link}
-                to="/report"
-                className="btn-primary inline-flex items-center text-lg font-bold shadow-xl"
-              >
-                Report an Issue
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button
-                as={Link}
-                to="/dashboard"
-                variant="outline"
-                className="bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold shadow"
-              >
-                View Dashboard
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-down" style={{ animationDelay: '0.2s', animationFillMode: 'both' }}>
+              <Link to="/report">
+                <Button className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full text-lg font-semibold shadow-lg transition-all duration-200">
+                  Report an Issue <ArrowRight className="inline ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/dashboard">
+                <Button className="bg-white/90 hover:bg-white text-green-700 px-8 py-3 rounded-full text-lg font-semibold shadow-lg border border-green-200 transition-all duration-200">
+                  View Dashboard
+                </Button>
+              </Link>
             </div>
           </div>
         </Container>
