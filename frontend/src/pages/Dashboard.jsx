@@ -1,231 +1,317 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { db } from '../services/firebase';
+import { reportsAPI, votingAPI } from '../services/api';
 import { 
-  collection, 
-  query, 
-  orderBy, 
-  onSnapshot,
-  where,
-  getDocs
-} from 'firebase/firestore';
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import { 
+  MapPin, 
   Users, 
-  TreePine, 
-  TrendingUp, 
-  Thermometer,
-  MapPin,
-  BarChart3,
-  Calendar,
-  DollarSign,
-  CheckCircle,
+  FileText, 
+  Activity,
+  ThumbsUp,
   Clock,
-  AlertTriangle
+  CheckCircle
 } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import Navbar from '../components/Navbar';
-import Sidebar from '../components/Sidebar';
-import MapView from '../components/MapView';
-import ReportCard from '../components/ReportCard';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
-export default function Dashboard() {
-  const { user } = useAuth();
+const Dashboard = () => {
+  const { user, role } = useAuth();
   const [reports, setReports] = useState([]);
+  const [votingSessions, setVotingSessions] = useState([]);
   const [stats, setStats] = useState({
     totalReports: 0,
-    approvedProjects: 0,
-    treesPlanted: 0,
-    heatReduction: 0,
-    totalUpvotes: 0,
-    activeUsers: 0
+    pendingReports: 0,
+    approvedReports: 0,
+    userReports: 0,
+    userVotes: 0
   });
-  const [timeSeriesData, setTimeSeriesData] = useState([]);
-  const [reportTypeData, setReportTypeData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'reports'),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const reportsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setReports(reportsData);
-      calculateStats(reportsData);
-      prepareChartData(reportsData);
-      setLoading(false);
-    });
-
-    return unsubscribe;
+    loadDashboardData();
   }, []);
 
-  const calculateStats = (reportsData) => {
-    const totalReports = reportsData.length;
-    const approvedProjects = reportsData.filter(r => r.status === 'approved').length;
-    const totalUpvotes = reportsData.reduce((sum, r) => sum + (r.upvotes || 0), 0);
-    
-    // Mock calculations for demonstration
-    const treesPlanted = approvedProjects * 15; // Average 15 trees per project
-    const heatReduction = approvedProjects * 0.8; // Average 0.8°C reduction per project
-    const activeUsers = new Set(reportsData.map(r => r.userId)).size;
+  const loadDashboardData = async () => {
+    try {
+      const reportsResponse = await reportsAPI.getAll({ limit: 10 });
+      setReports(reportsResponse.reports);
 
-    setStats({
-      totalReports,
-      approvedProjects,
-      treesPlanted,
-      heatReduction,
-      totalUpvotes,
-      activeUsers
-    });
-  };
+      if (['expert', 'authority'].includes(role)) {
+        const votingResponse = await votingAPI.getSessions({ limit: 5 });
+        setVotingSessions(votingResponse.sessions);
+      }
 
-  const prepareChartData = (reportsData) => {
-    // Time series data (last 7 days)
-    const last7Days = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      date.setHours(0, 0, 0, 0);
-      
-      const nextDate = new Date(date);
-      nextDate.setDate(nextDate.getDate() + 1);
-      
-      const dayReports = reportsData.filter(report => {
-        const reportDate = report.createdAt?.toDate();
-        return reportDate >= date && reportDate < nextDate;
+      const totalReports = reportsResponse.reports.length;
+      const pendingReports = reportsResponse.reports.filter(r => r.status === 'pending').length;
+      const approvedReports = reportsResponse.reports.filter(r => r.status === 'approved').length;
+
+      setStats({
+        totalReports,
+        pendingReports,
+        approvedReports,
+        userReports: user?.reportsCount || 0,
+        userVotes: user?.votesCount || 0
       });
-      
-      last7Days.push({
-        date: date.toLocaleDateString('en', { month: 'short', day: 'numeric' }),
-        reports: dayReports.length,
-        upvotes: dayReports.reduce((sum, r) => sum + (r.upvotes || 0), 0)
-      });
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
     }
-    setTimeSeriesData(last7Days);
-
-    // Report type distribution
-    const typeCounts = reportsData.reduce((acc, report) => {
-      const type = report.type || 'unknown';
-      acc[type] = (acc[type] || 0) + 1;
-      return acc;
-    }, {});
-
-    const typeData = Object.entries(typeCounts).map(([type, count]) => ({
-      name: type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      value: count,
-      color: type === 'vacant_land' ? '#f97316' : 
-             type === 'tree_loss' ? '#dc2626' : 
-             type === 'heat_hotspot' ? '#ef4444' : '#6b7280'
-    }));
-    setReportTypeData(typeData);
   };
 
-  const recentReports = reports.slice(0, 5);
+  const handleVoteOnReport = async (reportId, voteType) => {
+    try {
+      await reportsAPI.vote(reportId, voteType);
+      loadDashboardData();
+    } catch (error) {
+      console.error('Error voting:', error);
+    }
+  };
 
-  const getColorClasses = (color) => {
+  const getStatusColor = (status) => {
     const colors = {
-      blue: 'bg-blue-100 text-blue-600',
-      yellow: 'bg-yellow-100 text-yellow-600',
-      green: 'bg-green-100 text-green-600',
-      purple: 'bg-purple-100 text-purple-600',
+      pending: 'warning',
+      approved: 'success',
+      rejected: 'danger'
     };
-    return colors[color] || colors.blue;
+    return colors[status] || 'secondary';
   };
+
+  const getStatusIcon = (status) => {
+    const icons = {
+      pending: Clock,
+      approved: CheckCircle,
+      rejected: CheckCircle
+    };
+    return icons[status] || Clock;
+  };
+
+  const reportTypeData = [
+    { name: 'Unused Space', value: reports.filter(r => r.reportType === 'unused_space').length, color: '#10b981' },
+    { name: 'Tree Loss', value: reports.filter(r => r.reportType === 'tree_loss').length, color: '#ef4444' },
+    { name: 'Heat Hotspot', value: reports.filter(r => r.reportType === 'heat_hotspot').length, color: '#f59e0b' }
+  ];
+
+  const statusData = [
+    { name: 'Pending', value: stats.pendingReports, color: '#f59e0b' },
+    { name: 'Approved', value: stats.approvedReports, color: '#10b981' }
+  ];
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      <div className="flex">
-        <Sidebar />
-        <main className="flex-1 p-6">
-          {/* Overview Cards */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard Overview</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Total Reports</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.totalReports}</p>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <MapPin className="w-6 h-6 text-blue-600" />
-                  </div>
-                </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      <div className="bg-white/80 backdrop-blur-xl border-b border-secondary-200/60 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl">
+                <Activity className="w-5 h-5 text-white" />
               </div>
-
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Approved Projects</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.approvedProjects}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Trees Planted</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.treesPlanted}</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <TreePine className="w-6 h-6 text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Heat Reduction</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.heatReduction.toFixed(1)}°C</p>
-                  </div>
-                  <div className="p-3 bg-red-100 rounded-full">
-                    <Thermometer className="w-6 h-6 text-red-600" />
-                  </div>
-                </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-sm text-gray-500">Welcome back, {user?.fullName}</p>
               </div>
             </div>
+            <Button variant="outline" onClick={() => window.location.href = '/report'}>
+              New Report
+            </Button>
           </div>
+        </div>
+      </div>
 
-          {/* Map Preview */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Issue Map</h2>
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-              <MapView reports={recentReports} />
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card hover={false} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Reports</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.totalReports}</p>
+              </div>
+              <div className="p-3 bg-primary-100 rounded-lg">
+                <FileText className="w-6 h-6 text-primary-600" />
+              </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Recent Reports */}
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Reports</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recentReports.map((report) => (
-                <ReportCard key={report.id} report={report} />
+          <Card hover={false} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Pending Review</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.pendingReports}</p>
+              </div>
+              <div className="p-3 bg-warning-100 rounded-lg">
+                <Clock className="w-6 h-6 text-warning-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card hover={false} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Your Reports</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.userReports}</p>
+              </div>
+              <div className="p-3 bg-secondary-100 rounded-lg">
+                <Users className="w-6 h-6 text-secondary-600" />
+              </div>
+            </div>
+          </Card>
+
+          <Card hover={false} className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Your Votes</p>
+                <p className="text-2xl font-bold text-gray-900">{stats.userVotes}</p>
+              </div>
+              <div className="p-3 bg-accent-100 rounded-lg">
+                <ThumbsUp className="w-6 h-6 text-accent-600" />
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <Card hover={false} className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reports by Type</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={reportTypeData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {reportTypeData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </Card>
+
+          <Card hover={false} className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Reports by Status</h3>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={statusData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="value" fill="#10b981" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+
+        <Card hover={false} className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-semibold text-gray-900">Recent Reports</h3>
+            <Button variant="ghost" size="sm">
+              View All
+            </Button>
+          </div>
+          
+          <div className="space-y-4">
+            {reports.slice(0, 5).map((report) => {
+              const StatusIcon = getStatusIcon(report.status);
+              return (
+                <div key={report.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h4 className="font-medium text-gray-900">{report.title}</h4>
+                        <Badge variant={getStatusColor(report.status)} size="sm">
+                          {report.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{report.location.address}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <StatusIcon className="w-4 h-4" />
+                          <span>{new Date(report.createdAt?.seconds * 1000).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col space-y-2 ml-4">
+                      <div className="flex items-center space-x-2 text-sm">
+                        <span>{report.upvotes || 0}</span>
+                        <Button 
+                          size="sm" 
+                          variant="ghost"
+                          onClick={() => handleVoteOnReport(report.id, 'upvote')}
+                        >
+                          <ThumbsUp className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {['expert', 'authority'].includes(role) && votingSessions.length > 0 && (
+          <Card hover={false} className="p-6 mt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Active Voting Sessions</h3>
+            <div className="space-y-4">
+              {votingSessions.map((session) => (
+                <div key={session.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-gray-900">{session.title}</h4>
+                    <Badge variant={session.status === 'active' ? 'success' : 'secondary'} size="sm">
+                      {session.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3">{session.description}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>{session.totalVotes} votes</span>
+                      <span>Ends: {new Date(session.endDate?.seconds * 1000).toLocaleDateString()}</span>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      View Details
+                    </Button>
+                  </div>
+                </div>
               ))}
             </div>
-          </div>
-        </main>
+          </Card>
+        )}
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
