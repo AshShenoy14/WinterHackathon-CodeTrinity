@@ -196,6 +196,19 @@ export const votingAPI = {
   }
 };
 
+// Partners API
+export const partnersAPI = {
+  // Create new partner
+  create: async (partnerData) => {
+    return apiClient.post('/partners/create', partnerData);
+  },
+
+  // Get all partners
+  getAll: async () => {
+    return apiClient.get('/partners/getAll');
+  }
+};
+
 // Users Management API (for experts/authorities)
 export const usersAPI = {
   // Get all users

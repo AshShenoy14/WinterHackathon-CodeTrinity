@@ -7,7 +7,7 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-const {setGlobalOptions} = require("firebase-functions");
+const { setGlobalOptions } = require("firebase-functions");
 const logger = require("firebase-functions/logger");
 
 // Import controllers
@@ -59,6 +59,13 @@ exports.users = {
   updateRole: userController.updateUserRole,
   getAll: userController.getAllUsers,
   delete: userController.deleteUser
+};
+
+const partnerController = require('./src/controllers/partnerController');
+
+exports.partners = {
+  create: partnerController.createPartner,
+  getAll: partnerController.getPartners
 };
 
 // Create and deploy your first functions

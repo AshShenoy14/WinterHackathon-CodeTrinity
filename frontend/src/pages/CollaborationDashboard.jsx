@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../services/firebase';
-import { 
-  collection, 
-  query, 
-  orderBy, 
+import {
+  collection,
+  query,
+  orderBy,
   onSnapshot,
   doc,
   updateDoc,
   where,
   getDocs
 } from 'firebase/firestore';
-import { 
-  Users, 
-  Building, 
-  DollarSign, 
+import {
+  Users,
+  Building,
+  DollarSign,
   CheckCircle,
   Clock,
   AlertTriangle,
@@ -26,6 +26,8 @@ import {
   Handshake
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+import { partnersAPI } from '../services/api';
 
 const CollaborationDashboard = () => {
   const { user } = useAuth();
@@ -47,47 +49,28 @@ const CollaborationDashboard = () => {
         ...doc.data()
       }));
       setReports(reportsData);
-      
+
       // Filter projects based on status
-      const projectsData = reportsData.filter(report => 
+      const projectsData = reportsData.filter(report =>
         report.status === 'approved' || report.status === 'in_progress'
       );
       setProjects(projectsData);
-      
-      setLoading(false);
     });
 
-    // Mock partners data
-    const mockPartners = [
-      {
-        id: 1,
-        name: 'Green Earth Foundation',
-        type: 'NGO',
-        contribution: 'Funding & Volunteers',
-        projectsSupported: 12,
-        totalContribution: '$45,000',
-        status: 'active'
-      },
-      {
-        id: 2,
-        name: 'TechCorp Solutions',
-        type: 'CSR',
-        contribution: 'Technology & Infrastructure',
-        projectsSupported: 8,
-        totalContribution: '$120,000',
-        status: 'active'
-      },
-      {
-        id: 3,
-        name: 'City Municipal Corporation',
-        type: 'Government',
-        contribution: 'Land & Permissions',
-        projectsSupported: 25,
-        totalContribution: 'In-kind',
-        status: 'active'
+    // Fetch partners data
+    const fetchPartners = async () => {
+      try {
+        const response = await partnersAPI.getAll();
+        setPartners(response.partners || []);
+      } catch (error) {
+        console.error('Error fetching partners:', error);
+        toast.error('Failed to load partners data');
+      } finally {
+        setLoading(false);
       }
-    ];
-    setPartners(mockPartners);
+    };
+
+    fetchPartners();
 
     return unsubscribe;
   }, []);
@@ -101,7 +84,7 @@ const CollaborationDashboard = () => {
         approvedAt: new Date(),
         updatedAt: new Date()
       });
-      
+
       toast.success(`Project ${approvalStatus === 'approved' ? 'approved' : 'rejected'} successfully!`);
     } catch (error) {
       toast.error('Error updating project status');
@@ -224,11 +207,10 @@ const CollaborationDashboard = () => {
                 <button
                   key={tab}
                   onClick={() => setSelectedTab(tab)}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                    selectedTab === tab
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${selectedTab === tab
                       ? 'border-green-500 text-green-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1).replace('_', ' ')}
                   {tab === 'pending' && pendingProjects.length > 0 && (
@@ -258,9 +240,9 @@ const CollaborationDashboard = () => {
                         <div className="flex-1">
                           <div className="flex items-center space-x-3 mb-2">
                             <span className="text-lg">
-                              {project.type === 'vacant_land' ? '🏚️' : 
-                               project.type === 'tree_loss' ? '🌳' : 
-                               project.type === 'heat_hotspot' ? '🔥' : '📍'}
+                              {project.type === 'vacant_land' ? '🏚️' :
+                                project.type === 'tree_loss' ? '🌳' :
+                                  project.type === 'heat_hotspot' ? '🔥' : '📍'}
                             </span>
                             <h4 className="font-medium text-gray-900 capitalize">
                               {project.type?.replace('_', ' ')}
@@ -276,7 +258,7 @@ const CollaborationDashboard = () => {
                           {project.feasibility && (
                             <div className="bg-blue-50 rounded p-2 mb-2">
                               <p className="text-xs text-blue-900">
-                                <strong>Feasibility:</strong> {project.feasibility.feasibilityScore}% | 
+                                <strong>Feasibility:</strong> {project.feasibility.feasibilityScore}% |
                                 <strong> Impact:</strong> {project.feasibility.temperatureReduction}°C reduction
                               </p>
                             </div>
@@ -357,7 +339,7 @@ const CollaborationDashboard = () => {
                           <div className="mt-2">
                             <div className="flex items-center space-x-2">
                               <div className="flex-1 bg-gray-200 rounded-full h-2">
-                                <div className="bg-green-600 h-2 rounded-full" style={{width: '65%'}}></div>
+                                <div className="bg-green-600 h-2 rounded-full" style={{ width: '65%' }}></div>
                               </div>
                               <span className="text-xs text-gray-500">65% Complete</span>
                             </div>

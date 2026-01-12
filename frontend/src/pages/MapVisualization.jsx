@@ -4,10 +4,10 @@ import { db } from '../services/firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { Icon, divIcon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
-  TreePine, 
-  Thermometer, 
-  AlertTriangle, 
+import {
+  TreePine,
+  Thermometer,
+  AlertTriangle,
   CheckCircle,
   TrendingUp,
   Users
@@ -28,20 +28,6 @@ const MapVisualization = () => {
   const [selectedLayer, setSelectedLayer] = useState('all');
   const [loading, setLoading] = useState(true);
 
-  // Mock heat zones data
-  const mockHeatZones = [
-    { id: 1, lat: 40.7128, lng: -74.0060, intensity: 0.9, radius: 500 },
-    { id: 2, lat: 40.7580, lng: -73.9855, intensity: 0.7, radius: 400 },
-    { id: 3, lat: 40.7489, lng: -73.9680, intensity: 0.8, radius: 450 },
-  ];
-
-  // Mock green zones data
-  const mockGreenZones = [
-    { id: 1, lat: 40.7829, lng: -73.9654, coverage: 0.8, radius: 300 },
-    { id: 2, lat: 40.7282, lng: -73.9942, coverage: 0.6, radius: 250 },
-    { id: 3, lat: 40.7489, lng: -73.9680, coverage: 0.7, radius: 350 },
-  ];
-
   useEffect(() => {
     // Fetch real-time reports from Firestore
     const q = query(
@@ -56,12 +42,34 @@ const MapVisualization = () => {
         ...doc.data()
       }));
       setReports(reportsData);
+
+      // Calculate Heat Zones from 'heat_hotspot' reports
+      const newHeatZones = reportsData
+        .filter(r => r.reportType === 'heat_hotspot')
+        .map(r => ({
+          id: r.id,
+          lat: r.location.lat,
+          lng: r.location.lng,
+          intensity: 0.8, // Default intensity
+          radius: 300 // Default radius
+        }));
+      setHeatZones(newHeatZones);
+
+      // Calculate Green Zones from completed/implemented projects
+      // assuming they contribute to green cover
+      const newGreenZones = reportsData
+        .filter(r => r.status === 'implemented' || r.status === 'completed')
+        .map(r => ({
+          id: r.id,
+          lat: r.location.lat,
+          lng: r.location.lng,
+          coverage: 0.7, // Default coverage
+          radius: 200 // Default radius
+        }));
+      setGreenZones(newGreenZones);
+
       setLoading(false);
     });
-
-    // Set mock data for demonstration
-    setHeatZones(mockHeatZones);
-    setGreenZones(mockGreenZones);
 
     return () => unsubscribe();
   }, []);
@@ -74,7 +82,7 @@ const MapVisualization = () => {
     };
 
     const config = iconConfig[type] || iconConfig.vacant_land;
-    
+
     return divIcon({
       html: `<div class="flex items-center justify-center w-8 h-8 bg-white rounded-full shadow-lg border-2 border-gray-300">
         <span class="text-lg">${config.icon}</span>
@@ -243,12 +251,11 @@ const MapVisualization = () => {
                         <strong>Address:</strong> {report.address}
                       </p>
                       <p className="text-xs text-gray-500">
-                        <strong>Status:</strong> 
-                        <span className={`ml-1 px-2 py-1 rounded text-xs ${
-                          report.status === 'approved' ? 'bg-green-100 text-green-800' :
-                          report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <strong>Status:</strong>
+                        <span className={`ml-1 px-2 py-1 rounded text-xs ${report.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                          }`}>
                           {report.status}
                         </span>
                       </p>
@@ -262,9 +269,9 @@ const MapVisualization = () => {
                       )}
                     </div>
                     {report.imageUrl && (
-                      <img 
-                        src={report.imageUrl} 
-                        alt="Report" 
+                      <img
+                        src={report.imageUrl}
+                        alt="Report"
                         className="mt-2 w-full h-32 object-cover rounded"
                       />
                     )}

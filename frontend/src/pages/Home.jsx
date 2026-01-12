@@ -10,30 +10,54 @@ import Card from '../components/ui/Card';
 import Container from '../components/layout/Container';
 import MapView from '../components/MapView';
 
-// Mock data for demonstration
-const mockReports = [
-  { id: 1, title: 'Illegal Dumping', location: 'Central Park', type: 'waste', status: 'pending' },
-  { id: 2, title: 'Deforestation', location: 'West Forest', type: 'trees', status: 'in-progress' },
-  { id: 3, title: 'Water Pollution', location: 'Riverside', type: 'water', status: 'resolved' },
-];
+import { reportsAPI } from '../services/api';
+
+// Reports now fetched from backend
 
 const Home = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener('scroll', handleScroll);
+
+    // Fetch reports
+    const fetchReports = async () => {
+      try {
+        // We could use the API service or direct Firestore. 
+        // Using Firestore listener for real-time updates on Home page is nice.
+        // But for consistency let's use the API service we verified.
+        // Actually, for "Real-Time Updates" feature mentioned in the landing page, 
+        // a listener (onSnapshot) would be better, similar to Dashboard.
+        // Let's stick to the API for simplicity and consistency with the service layer 
+        // unless I want to import firebase directly again.
+        // Let's use the reportsAPI.getAll() and maybe set an interval or just load once.
+        const response = await reportsAPI.getAll({ limit: 6 });
+        if (response && response.reports) {
+          setReports(response.reports);
+        }
+      } catch (error) {
+        console.error('Failed to fetch reports:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const filteredReports = mockReports.filter(report =>
+  const filteredReports = reports.filter(report =>
     (activeTab === 'all' || report.status === activeTab) &&
     (report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.location.toLowerCase().includes(searchQuery.toLowerCase()))
+      report.location.address?.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const stats = [
@@ -141,8 +165,8 @@ const Home = () => {
                     key={tab}
                     onClick={() => setActiveTab(tab)}
                     className={`px-5 py-3 rounded-xl font-medium whitespace-nowrap transition-all duration-200 ${activeTab === tab
-                        ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
-                        : 'bg-gray-100/50 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/30'
+                      : 'bg-gray-100/50 text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                       }`}
                   >
                     {tab.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}

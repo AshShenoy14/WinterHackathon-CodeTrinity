@@ -2,7 +2,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 
-const Button = ({
+const Button = ({ 
   children,
   variant = 'primary',
   size = 'md',
@@ -48,9 +48,12 @@ const Button = ({
     return <Icon className={`${iconSizes[size]} ${iconPosition === 'left' ? 'mr-2' : 'ml-2'} transition-transform group-hover:scale-110`} />;
   };
 
+  // Add default styles for visibility
+  const defaultClass = 'bg-blue-600 text-white border border-blue-700 shadow-lg px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400';
+
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      className={`${defaultClass} ${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={isLoading || disabled}
       {...props}
     >
@@ -59,7 +62,6 @@ const Button = ({
           <Loader2 className={`h-5 w-5 animate-spin ${iconSizes[size]}`} />
         </div>
       )}
-      
       <span className={`flex items-center justify-center ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity`}>
         {iconPosition === 'left' && renderIcon()}
         {children}
