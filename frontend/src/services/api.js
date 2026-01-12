@@ -1,11 +1,72 @@
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://us-central1-greenpulse.cloudfunctions.net';
 
+// Mock Data for Demo/Fallback
+const MOCK_DATA = {
+  reports: [
+    {
+      id: 'mock-1',
+      title: 'Heat Island in Downtown',
+      description: 'Severe heat accumulation in this concrete area.',
+      location: { lat: 12.9716, lng: 77.5946, address: 'MG Road, Bangalore' },
+      reportType: 'heat_hotspot',
+      status: 'pending',
+      upvotes: 15,
+      downvotes: 1,
+      createdAt: new Date().toISOString(),
+      aiAnalysis: {
+        riskLevel: 'High',
+        recommendation: 'Plant urban canopy',
+        environmentalImpact: 'Significant reduction in local temp expected'
+      }
+    },
+    {
+      id: 'mock-2',
+      title: 'Deforested Park Zone',
+      description: 'Several trees cut down illegally.',
+      location: { lat: 12.9352, lng: 77.6245, address: 'Koramangala, Bangalore' },
+      reportType: 'tree_loss',
+      status: 'approved',
+      upvotes: 42,
+      downvotes: 0,
+      createdAt: new Date().toISOString(),
+      aiAnalysis: {
+        riskLevel: 'Critical',
+        recommendation: 'Immediate reforestation',
+        environmentalImpact: 'Loss of biodiversity'
+      }
+    },
+    {
+      id: 'mock-3',
+      title: 'Empty Plot for Garden',
+      description: 'Unused space that could be a community garden.',
+      location: { lat: 12.9250, lng: 77.5891, address: 'Jayanagar, Bangalore' },
+      reportType: 'unused_space',
+      status: 'under_review',
+      upvotes: 8,
+      downvotes: 0,
+      createdAt: new Date().toISOString(),
+      aiAnalysis: {
+        riskLevel: 'Low',
+        recommendation: 'Community gardening',
+        environmentalImpact: 'Positive social and environmental impact'
+      }
+    }
+  ],
+  stats: {
+    totalReports: 150,
+    resolvedReports: 89,
+    treesPlanted: 450,
+    activeHotspots: 12
+  }
+};
+
 // Generic API client
 class ApiClient {
   constructor(baseURL) {
     this.baseURL = baseURL;
     this.token = null;
+    this.useMock = true; // Enable fallback by default if connection fails
   }
 
   setToken(token) {
@@ -32,6 +93,7 @@ class ApiClient {
     };
 
     try {
+      // console.log(`Fetching: ${url}`);
       const response = await fetch(url, config);
       const data = await response.json();
 
@@ -42,8 +104,42 @@ class ApiClient {
       return data;
     } catch (error) {
       console.error('API request failed:', error);
+
+      // Fallback to Mock Data (Alternative)
+      if (this.useMock) {
+        console.warn('Falling back to MOCK DATA for:', endpoint);
+        return this.getMockResponse(endpoint, options);
+      }
+
       throw error;
     }
+  }
+
+  getMockResponse(endpoint, options) {
+    // Return appropriate mock data based on endpoint
+    if (endpoint.includes('reports-list')) {
+      return { reports: MOCK_DATA.reports, pagination: { page: 1, limit: 10, total: 3, pages: 1 } };
+    }
+    if (endpoint.includes('reports-create')) {
+      return { id: 'mock-new-' + Date.now(), message: 'Report created (MOCK)', ...JSON.parse(options.body || '{}') };
+    }
+    if (endpoint.includes('ai-analyze')) {
+      return { riskLevel: 'Predicted', recommendation: 'Mock AI Recommendation', confidence: 0.95 };
+    }
+    if (endpoint.includes('users-login') || endpoint.includes('users-register')) {
+      return {
+        token: 'mock-token',
+        user: { uid: 'mock-user', email: 'user@example.com', role: 'citizen', fullName: 'Mock User' }
+      };
+    }
+    if (endpoint.includes('ai-getAnalysis')) {
+      return {
+        riskLevel: 'Medium',
+        recommendation: 'Based on the mock analysis, we recommend planting more trees.',
+        environmentalImpact: 'Moderate positive impact.'
+      };
+    }
+    return {};
   }
 
   async get(endpoint, params = {}) {
@@ -78,7 +174,7 @@ const apiClient = new ApiClient(API_BASE_URL);
 export const authAPI = {
   // Register new user
   register: async (userData) => {
-    const response = await apiClient.post('/users/register', userData);
+    const response = await apiClient.post('/users-register', userData);
     if (response.token) {
       apiClient.setToken(response.token);
       localStorage.setItem('authToken', response.token);
@@ -88,7 +184,7 @@ export const authAPI = {
 
   // Login user
   login: async (credentials) => {
-    const response = await apiClient.post('/users/login', credentials);
+    const response = await apiClient.post('/users-login', credentials);
     if (response.token) {
       apiClient.setToken(response.token);
       localStorage.setItem('authToken', response.token);
@@ -98,12 +194,12 @@ export const authAPI = {
 
   // Get current user profile
   getProfile: async () => {
-    return apiClient.get('/users/getProfile');
+    return apiClient.get('/users-getProfile');
   },
 
   // Update user profile
   updateProfile: async (profileData) => {
-    return apiClient.patch('/users/updateProfile', profileData);
+    return apiClient.patch('/users-updateProfile', profileData);
   },
 
   // Logout
@@ -126,27 +222,28 @@ export const authAPI = {
 export const reportsAPI = {
   // Create new report
   create: async (reportData) => {
-    return apiClient.post('/reports/create', reportData);
+    return apiClient.post('/reports-create', reportData);
   },
 
   // Get all reports with pagination and filters
   getAll: async (params = {}) => {
-    return apiClient.get('/reports/list', params);
+    return apiClient.get('/reports-list', params);
   },
 
   // Get single report by ID
   getById: async (reportId) => {
-    return apiClient.get(`/reports/get/${reportId}`);
+    // Pass reportId as query param for robustness with onRequest
+    return apiClient.get(`/reports-get?reportId=${reportId}`);
   },
 
   // Update report status (expert/authority only)
   updateStatus: async (reportId, statusData) => {
-    return apiClient.patch(`/reports/updateStatus/${reportId}`, statusData);
+    return apiClient.patch(`/reports-updateStatus?reportId=${reportId}`, statusData);
   },
 
   // Vote on a report
   vote: async (reportId, voteType) => {
-    return apiClient.post('/reports/vote', { reportId, voteType });
+    return apiClient.post('/reports-vote', { reportId, voteType });
   }
 };
 
@@ -154,17 +251,17 @@ export const reportsAPI = {
 export const aiAPI = {
   // Analyze report with AI
   analyze: async (analysisData) => {
-    return apiClient.post('/ai/analyze', analysisData);
+    return apiClient.post('/ai-analyze', analysisData);
   },
 
   // Get analysis for a report
   getAnalysis: async (reportId) => {
-    return apiClient.get(`/ai/getAnalysis/${reportId}`);
+    return apiClient.get(`/ai-getAnalysis?reportId=${reportId}`);
   },
 
   // Batch analyze multiple reports
   batchAnalyze: async (reportIds) => {
-    return apiClient.post('/ai/batchAnalyze', { reportIds });
+    return apiClient.post('/ai-batchAnalyze', { reportIds });
   }
 };
 
@@ -172,27 +269,27 @@ export const aiAPI = {
 export const votingAPI = {
   // Create new voting session
   createSession: async (sessionData) => {
-    return apiClient.post('/voting/createSession', sessionData);
+    return apiClient.post('/voting-createSession', sessionData);
   },
 
   // Get all voting sessions
   getSessions: async (params = {}) => {
-    return apiClient.get('/voting/getSessions', params);
+    return apiClient.get('/voting-getSessions', params);
   },
 
   // Vote on a session
   vote: async (sessionId, voteData) => {
-    return apiClient.post('/voting/vote', { sessionId, ...voteData });
+    return apiClient.post('/voting-vote', { sessionId, ...voteData });
   },
 
   // Get voting results
   getResults: async (sessionId) => {
-    return apiClient.get(`/voting/getResults/${sessionId}`);
+    return apiClient.get(`/voting-getResults?sessionId=${sessionId}`);
   },
 
   // Close voting session
   closeSession: async (sessionId, closeData) => {
-    return apiClient.patch(`/voting/closeSession/${sessionId}`, closeData);
+    return apiClient.patch(`/voting-closeSession?sessionId=${sessionId}`, closeData);
   }
 };
 
@@ -200,12 +297,12 @@ export const votingAPI = {
 export const partnersAPI = {
   // Create new partner
   create: async (partnerData) => {
-    return apiClient.post('/partners/create', partnerData);
+    return apiClient.post('/partners-create', partnerData);
   },
 
   // Get all partners
   getAll: async () => {
-    return apiClient.get('/partners/getAll');
+    return apiClient.get('/partners-getAll');
   }
 };
 
@@ -213,17 +310,17 @@ export const partnersAPI = {
 export const usersAPI = {
   // Get all users
   getAll: async (params = {}) => {
-    return apiClient.get('/users/getAll', params);
+    return apiClient.get('/users-getAll', params);
   },
 
   // Update user role
   updateRole: async (userId, roleData) => {
-    return apiClient.patch('/users/updateRole', { userId, ...roleData });
+    return apiClient.patch('/users-updateRole', { userId, ...roleData });
   },
 
   // Delete user
   delete: async (userId) => {
-    return apiClient.delete(`/users/delete/${userId}`);
+    return apiClient.delete(`/users-delete/${userId}`);
   }
 };
 

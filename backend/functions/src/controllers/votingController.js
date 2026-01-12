@@ -22,7 +22,7 @@ exports.createVotingSession = onRequest({
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
-    
+
     // Check if user has authority role
     const userDoc = await db.collection('users').doc(decodedToken.uid).get();
     if (!userDoc.exists || userDoc.data().role !== 'authority') {
@@ -48,15 +48,15 @@ exports.createVotingSession = onRequest({
     }
 
     // Validate that all reports exist and are approved
-    const reportPromises = reportIds.map(reportId => 
+    const reportPromises = reportIds.map(reportId =>
       db.collection('reports').doc(reportId).get()
     );
-    
+
     const reportDocs = await Promise.all(reportPromises);
     const invalidReports = reportDocs.filter(doc => !doc.exists || doc.data().status !== 'approved');
-    
+
     if (invalidReports.length > 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Some reports are invalid or not approved',
         invalidReports: invalidReports.map((doc, index) => reportIds[index])
       });
@@ -130,9 +130,9 @@ exports.getVotingSessions = onRequest({
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
     const snapshot = await query.offset(offset).limit(parseInt(limit)).get();
-    
+
     const sessions = [];
-    
+
     for (const doc of snapshot.docs) {
       const sessionData = {
         id: doc.id,
@@ -140,10 +140,10 @@ exports.getVotingSessions = onRequest({
       };
 
       // Get report details for each session
-      const reportPromises = sessionData.reportIds.map(reportId => 
+      const reportPromises = sessionData.reportIds.map(reportId =>
         db.collection('reports').doc(reportId).get()
       );
-      
+
       const reportDocs = await Promise.all(reportPromises);
       sessionData.reports = reportDocs.map(reportDoc => ({
         id: reportDoc.id,
@@ -156,7 +156,7 @@ exports.getVotingSessions = onRequest({
         .collection('votes')
         .where('userId', '==', token.uid)
         .get();
-      
+
       sessionData.userHasVoted = !userVote.empty;
       sessionData.userVote = userVote.empty ? null : userVote.docs[0].data().vote;
 
@@ -166,7 +166,7 @@ exports.getVotingSessions = onRequest({
     // Get total count
     const countQuery = db.collection('votingSessions');
     let countSnapshot;
-    
+
     if (status || votingType) {
       let countQueryFiltered = countQuery;
       if (status) countQueryFiltered = countQueryFiltered.where('status', '==', status);
@@ -227,7 +227,7 @@ exports.voteOnSession = onRequest({
     }
 
     const sessionData = sessionDoc.data();
-    
+
     if (sessionData.status !== 'active') {
       return res.status(400).json({ error: 'Voting session is not active' });
     }
@@ -282,7 +282,7 @@ exports.voteOnSession = onRequest({
     // Check if minimum votes reached and auto-close if needed
     const updatedSession = await db.collection('votingSessions').doc(sessionId).get();
     const updatedData = updatedSession.data();
-    
+
     if (updatedData.totalVotes >= updatedData.minVotesRequired) {
       await db.collection('votingSessions').doc(sessionId).update({
         status: 'completed',
@@ -290,7 +290,7 @@ exports.voteOnSession = onRequest({
       });
     }
 
-    res.status(201).json({ 
+    res.status(201).json({
       message: 'Vote recorded successfully',
       sessionStatus: updatedData.totalVotes >= updatedData.minVotesRequired ? 'completed' : 'active'
     });
@@ -339,7 +339,7 @@ exports.getVotingResults = onRequest({
       .doc(sessionId)
       .collection('votes')
       .get();
-    
+
     const votes = [];
     const voteBreakdown = {
       support: 0,
@@ -406,7 +406,7 @@ exports.closeVotingSession = onRequest({
 
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await admin.auth().verifyIdToken(token);
-    
+
     // Check if user has authority role
     const userDoc = await db.collection('users').doc(decodedToken.uid).get();
     if (!userDoc.exists || userDoc.data().role !== 'authority') {
