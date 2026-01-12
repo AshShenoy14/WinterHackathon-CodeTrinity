@@ -1,6 +1,9 @@
-/* eslint-env node */
 // tailwind.config.js
-module.exports = {
+import forms from '@tailwindcss/forms';
+import typography from '@tailwindcss/typography';
+
+/** @type {import('tailwindcss').Config} */
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -35,7 +38,7 @@ module.exports = {
           950: '#042f2e',
         },
         accent: {
-          500: '#84cc16', // Lime
+          500: '#84cc16',
           600: '#65a30d',
         },
         surface: {
@@ -49,6 +52,9 @@ module.exports = {
           700: '#3f3f46',
           800: '#27272a',
           900: '#18181b',
+        },
+        success: {
+          500: '#10b981',
         }
       },
       fontFamily: {
@@ -61,6 +67,9 @@ module.exports = {
         'soft-lg': '0 10px 40px -5px rgba(16, 185, 129, 0.15)',
         'glow': '0 0 20px rgba(52, 211, 153, 0.5)',
         'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'button-hover': '0 8px 25px -5px rgba(16, 185, 129, 0.25)',
+        'card': '0 4px 20px -2px rgba(0, 0, 0, 0.08)',
+        'card-hover': '0 8px 30px -5px rgba(0, 0, 0, 0.12)',
       },
       animation: {
         'float': 'float 6s ease-in-out infinite',
@@ -94,11 +103,14 @@ module.exports = {
       },
       backdropBlur: {
         'xs': '2px',
+      },
+      backgroundSize: {
+        '200': '200% 200%',
       }
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
-    require('@tailwindcss/typography'),
+    forms,
+    typography,
   ],
 }
