@@ -1,70 +1,102 @@
-import { MapPin, Calendar } from 'lucide-react';
-
+import { MapPin, Calendar, ArrowRight } from 'lucide-react';
 
 export default function ReportCard({ report }) {
-  const getStatusColor = (status) => {
+  const getStatusConfig = (status) => {
     switch (status?.toLowerCase()) {
       case 'pending':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        return {
+          bg: 'bg-amber-50',
+          text: 'text-amber-700',
+          border: 'border-amber-200',
+          dot: 'bg-amber-400'
+        };
       case 'in progress':
       case 'in-progress':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return {
+          bg: 'bg-blue-50',
+          text: 'text-blue-700',
+          border: 'border-blue-200',
+          dot: 'bg-blue-400'
+        };
       case 'resolved':
-        return 'bg-green-50 text-green-700 border-green-200';
+        return {
+          bg: 'bg-emerald-50',
+          text: 'text-emerald-700',
+          border: 'border-emerald-200',
+          dot: 'bg-emerald-400'
+        };
       case 'rejected':
-        return 'bg-red-50 text-red-700 border-red-200';
+        return {
+          bg: 'bg-rose-50',
+          text: 'text-rose-700',
+          border: 'border-rose-200',
+          dot: 'bg-rose-400'
+        };
       default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+        return {
+          bg: 'bg-gray-50',
+          text: 'text-gray-700',
+          border: 'border-gray-200',
+          dot: 'bg-gray-400'
+        };
     }
   };
 
+  const statusStyle = getStatusConfig(report.status);
+
   return (
-    <div
-      className={
-        `rounded-xl border overflow-hidden bg-gradient-to-br from-white via-emerald-50 to-cyan-50 transition-all duration-300 shadow-sm hover:shadow-2xl hover:scale-[1.025] group`
-      }
-      style={{ minHeight: 220 }}
-    >
+    <div className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-soft hover:shadow-soft-lg transition-all duration-300 hover:-translate-y-1">
+      {/* Image Overlay Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none" />
+
       {/* Image */}
-      {report.image && (
-        <div className="aspect-video w-full bg-gray-100 overflow-hidden">
+      {report.image ? (
+        <div className="aspect-video w-full bg-gray-100 overflow-hidden relative">
           <img
             src={report.image}
             alt={report.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           />
+          <div className="absolute top-3 right-3 z-20">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border shadow-sm backdrop-blur-md ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot} animate-pulse`} />
+              {report.status}
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="aspect-video w-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center">
+          <p className="text-gray-400 font-medium">No Image</p>
         </div>
       )}
 
       {/* Content */}
-      <div className="p-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <h3 className="font-semibold text-gray-900 line-clamp-2 text-lg group-hover:text-green-700 transition-colors duration-200">{report.title}</h3>
-          <span
-            className={`flex items-center gap-1 px-2 py-1 text-xs font-bold rounded-full whitespace-nowrap shadow border transition-colors duration-200 ${getStatusColor(report.status)}`}
-          >
-            {/* Status icon */}
-            {report.status?.toLowerCase() === 'pending' && <span className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse" />}
-            {(report.status?.toLowerCase() === 'in progress' || report.status?.toLowerCase() === 'in-progress') && <span className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />}
-            {report.status?.toLowerCase() === 'resolved' && <span className="w-2 h-2 bg-green-400 rounded-full" />}
-            {report.status?.toLowerCase() === 'rejected' && <span className="w-2 h-2 bg-red-400 rounded-full" />}
-            {report.status}
-          </span>
-        </div>
+      <div className="p-5">
+        <h3 className="font-display font-semibold text-gray-900 text-lg mb-2 line-clamp-1 group-hover:text-primary-600 transition-colors">
+          {report.title}
+        </h3>
 
-        <p className="text-sm text-gray-700 line-clamp-2 mb-3 font-medium group-hover:text-gray-900 transition-colors duration-200">{report.description}</p>
+        <p className="text-sm text-gray-600 line-clamp-2 mb-4 font-normal leading-relaxed">
+          {report.description}
+        </p>
 
-        <div className="flex items-center gap-4 text-xs text-gray-500">
-          <div className="flex items-center gap-1">
-            <MapPin className="w-3 h-3" />
-            <span>{report.location}</span>
+        <div className="grid grid-cols-2 gap-3 text-xs text-gray-500 py-3 border-t border-gray-100">
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-primary-500" />
+            <span className="truncate">{report.location}</span>
           </div>
           {report.date && (
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-primary-500" />
               <span>{report.date}</span>
             </div>
           )}
+        </div>
+
+        <div className="mt-3 pt-3 flex justify-end">
+          <button className="text-sm font-semibold text-primary-600 flex items-center gap-1 group/btn hover:gap-2 transition-all">
+            View Details <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </div>

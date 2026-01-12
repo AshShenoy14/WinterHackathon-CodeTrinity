@@ -1,40 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --primary: #22c55e;
-  --primary-light: #86efac;
-  --primary-dark: #15803d;
+  --primary: #10b981;
+  --primary-light: #6ee7b7;
+  --primary-dark: #047857;
 }
 
+@layer base {
+  body {
+    @apply min-h-screen text-gray-800 bg-gray-50 font-sans antialiased overflow-x-hidden;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 90% 80%, rgba(45, 212, 191, 0.1) 0%, transparent 40%),
+      url('/colorful-bg.svg'); /* Fallback or existing pattern */
+    background-size: cover;
+    background-attachment: fixed;
+  }
 
-body {
-  @apply min-h-screen text-gray-800 bg-gradient-to-br from-green-50 via-emerald-100 to-blue-100;
-  background-image:
-    linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 40%, #a5f3fc 100%),
-    url('/colorful-bg.svg');
-  background-blend-mode: lighten;
-  background-repeat: no-repeat;
-  background-size: cover;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display tracking-tight text-gray-900;
+  }
 }
 
-h1, h2, h3, h4, h5, h6 {
-  @apply font-display font-bold;
-}
+@layer components {
+  .btn-primary {
+    @apply relative overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-semibold rounded-xl px-6 py-2.5 transition-all duration-300 transform hover:-translate-y-0.5 hover:shadow-glow active:scale-95;
+  }
 
-.btn-primary {
-  @apply bg-gradient-to-r from-green-400 via-emerald-500 to-cyan-400 hover:from-green-500 hover:to-cyan-500 text-white font-semibold rounded-lg px-6 py-2.5 transition-all duration-200 transform hover:scale-[1.04] shadow-lg hover:shadow-emerald-200/60;
-}
+  .card {
+    @apply bg-white/70 backdrop-blur-md border border-white/20 rounded-2xl shadow-soft hover:shadow-soft-lg transition-all duration-300;
+  }
 
-.card {
-  @apply bg-gradient-to-br from-white via-green-50 to-emerald-50 rounded-xl shadow-soft overflow-hidden transition-all duration-300 hover:shadow-soft-lg border border-emerald-100;
-}
+  .glass-panel {
+    @apply bg-white/60 backdrop-blur-lg border border-white/50 shadow-glass;
+  }
 
-.input-field {
-  @apply w-full px-4 py-2.5 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent transition-all duration-200 bg-white/80;
+  .input-field {
+    @apply w-full px-4 py-3 bg-white/50 border border-emerald-100 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all duration-200 outline-none backdrop-blur-sm hover:bg-white/80 focus:bg-white;
+  }
 }
 
 /* Custom scrollbar */
@@ -44,9 +51,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gradient-to-r from-green-50 via-emerald-50 to-blue-50;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-emerald-200 rounded-full hover:bg-emerald-300;
+  @apply bg-emerald-200/80 rounded-full hover:bg-emerald-300 transition-colors;
 }
