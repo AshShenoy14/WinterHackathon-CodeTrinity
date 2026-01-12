@@ -2,6 +2,7 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Button = ({
   children,
@@ -12,6 +13,7 @@ const Button = ({
   disabled = false,
   icon: Icon,
   iconPosition = 'left',
+  as,
   ...props
 }) => {
   const baseStyles = 'relative inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none transform group overflow-hidden';
@@ -24,7 +26,7 @@ const Button = ({
     danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-button hover:shadow-button-hover focus:ring-red-500',
     ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500',
     outline: 'border-2 border-primary-500 text-primary-600 hover:bg-primary-50 focus:ring-primary-500',
-    glass: 'btn-glass shadow-glass focus:ring-white/50',
+    glass: 'btn-glass shadow-glass focus:ring-white/50 text-white border border-white/20 hover:bg-white/10',
     gradient: 'btn-primary shadow-button hover:shadow-button-hover focus:ring-primary-500 bg-size-300 bg-pos-0 hover:bg-pos-100 transition-all duration-500',
   };
 
@@ -50,15 +52,10 @@ const Button = ({
   };
 
   const defaultClass = 'shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400';
+  const combinedClassName = `${defaultClass} ${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`;
 
-  return (
-    <motion.button
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.95 }}
-      className={`${defaultClass} ${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      disabled={isLoading || disabled}
-      {...props}
-    >
+  const content = (
+    <>
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-white/10 backdrop-blur-sm rounded-xl">
           <Loader2 className={`h-5 w-5 animate-spin ${iconSizes[size]}`} />
@@ -69,6 +66,48 @@ const Button = ({
         {children}
         {iconPosition === 'right' && renderIcon()}
       </span>
+    </>
+  );
+
+  // If 'to' prop is passed, render as Link
+  if (props.to) {
+    const Component = motion(Link);
+    return (
+      <Component
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.95 }}
+        className={combinedClassName}
+        {...props}
+      >
+        {content}
+      </Component>
+    );
+  }
+
+  // If 'href' is passed, render as a tag
+  if (props.href) {
+    return (
+      <motion.a
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.95 }}
+        className={combinedClassName}
+        {...props}
+      >
+        {content}
+      </motion.a>
+    );
+  }
+
+  // Default button
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.95 }}
+      className={combinedClassName}
+      disabled={isLoading || disabled}
+      {...props}
+    >
+      {content}
     </motion.button>
   );
 };

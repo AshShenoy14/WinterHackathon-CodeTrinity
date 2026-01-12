@@ -301,27 +301,27 @@ const Home = () => {
               <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-secondary-900/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '1.5s' }}></div>
 
               <div className="relative z-10 max-w-4xl mx-auto">
-                <h2 className="text-4xl md:text-5xl font-display font-bold mb-8">Ready to make a difference?</h2>
-                <p className="text-xl text-primary-50 mb-10 max-w-2xl mx-auto opacity-90">
-                  Join thousands of citizens already making their communities greener and more sustainable today.
+                <h2 className="text-4xl md:text-6xl font-display font-bold mb-8 leading-tight">
+                  Ready to make a <span className="text-primary-200">difference?</span>
+                </h2>
+                <p className="text-xl text-primary-50 mb-10 max-w-2xl mx-auto opacity-90 leading-relaxed">
+                  Join thousands of citizens already making their communities greener and more sustainable today. Every report counts.
                 </p>
                 <div className="flex flex-col sm:flex-row justify-center gap-5">
                   <Button
-                    as={Link}
-                    to="/register"
+                    to="/auth"
                     size="lg"
-                    className="bg-white text-primary-700 hover:bg-gray-50 shadow-lg border-0"
+                    className="bg-white text-primary-700 hover:bg-gray-50 shadow-xl border-0 font-bold px-10 py-4 text-xl"
                   >
-                    Get Started Now
+                    Get Started Now <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                   <Button
-                    as={Link}
-                    to="/about"
+                    to="/impact"
                     variant="glass"
                     size="lg"
-                    className="border-white/40 hover:bg-white/10"
+                    className="border-white/40 hover:bg-white/10 px-10 py-4 text-xl"
                   >
-                    Learn More
+                    See Real Impact
                   </Button>
                 </div>
               </div>

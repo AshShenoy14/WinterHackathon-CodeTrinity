@@ -51,50 +51,26 @@ exports.createReport = onRequest({
       return res.status(400).json({ error: 'Invalid report type' });
     }
 
-    // Initial report data
-    const reportData = {
-      title,
+    // 1. Create Report in Firestore (Initial state)
+    const reportRef = admin.firestore().collection('reports').doc();
+    const reportId = reportRef.id;
+
+    await reportRef.set({
+      id: reportId,
+      title: title || 'New Report',
       description,
-      location: {
-        lat: location.lat,
-        lng: location.lng,
-        address: location.address || ''
-      },
+      location,
       reportType,
       imageUrl: imageUrl || '',
       additionalInfo: additionalInfo || '',
       userId: decodedToken.uid,
-      userId: decodedToken.uid,
       status: 'pending_analysis', // NEW INITIAL STATUS
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       upvotes: 0,
       downvotes: 0,
       aiAnalysis: null,
       expertReview: null
-    };
-
-    const reportRef = await db.collection('reports').add(reportData);
-
-    // Trigger AI Analysis asynchronously
-    try {
-      const aiService = require('../services/aiService');
-
-      // 1. Analyze image (if exists)
-      let imageAnalysis = null;
-      if (imageUrl) {
-        imageAnalysis = await aiService.analyzeImage(imageUrl);
-      }
-
-      // 2. Generate Report Analysis
-      const aiResult = await aiService.generateReportAnalysis({
-        reportType,
-        location: reportData.location,
-        description,
-        imageAnalysis
-      });
-
       // 3. Update report with analysis
       // 3. Update report with analysis & Move to Next Stage
       const updatePayload = {
@@ -106,49 +82,49 @@ exports.createReport = onRequest({
       };
 
       // Auto-correct category if confidence is high (implied by suggestion)
-      if (aiResult.suggested_category && aiResult.suggested_category !== reportType) {
-        updatePayload.reportType = aiResult.suggested_category;
-        updatePayload.originalReportType = reportType; // Keep track of user's original choice
-      }
-
-      await reportRef.update(updatePayload);
-
-    } catch (aiError) {
-      logger.error("Auto-AI Analysis failed during createReport", aiError);
-      // Don't fail the request, just log it. The report is created.
+      if(aiResult.suggested_category && aiResult.suggested_category !== reportType) {
+      updatePayload.reportType = aiResult.suggested_category;
+      updatePayload.originalReportType = reportType; // Keep track of user's original choice
     }
 
-    const report = await reportRef.get();
+    await reportRef.update(updatePayload);
 
-    // Create user profile if it doesn't exist
-    const userRef = db.collection('users').doc(decodedToken.uid);
-    const userDoc = await userRef.get();
-
-    if (!userDoc.exists) {
-      await userRef.set({
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        displayName: decodedToken.name || decodedToken.email,
-        role: 'citizen',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        reportsCount: 1,
-        votesCount: 0
-      });
-    } else {
-      await userRef.update({
-        reportsCount: admin.firestore.FieldValue.increment(1)
-      });
-    }
-
-    res.status(201).json({
-      id: reportRef.id,
-      ...report.data()
-    });
-
-  } catch (error) {
-    logger.error('Error creating report:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  } catch (aiError) {
+    logger.error("Auto-AI Analysis failed during createReport", aiError);
+    // Don't fail the request, just log it. The report is created.
   }
+
+  const report = await reportRef.get();
+
+  // Create user profile if it doesn't exist
+  const userRef = db.collection('users').doc(decodedToken.uid);
+  const userDoc = await userRef.get();
+
+  if (!userDoc.exists) {
+    await userRef.set({
+      uid: decodedToken.uid,
+      email: decodedToken.email,
+      displayName: decodedToken.name || decodedToken.email,
+      role: 'citizen',
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      reportsCount: 1,
+      votesCount: 0
+    });
+  } else {
+    await userRef.update({
+      reportsCount: admin.firestore.FieldValue.increment(1)
+    });
+  }
+
+  res.status(201).json({
+    id: reportRef.id,
+    ...report.data()
+  });
+
+} catch (error) {
+  logger.error('Error creating report:', error);
+  res.status(500).json({ error: 'Internal server error' });
+}
 });
 
 // Get all reports with pagination and filtering

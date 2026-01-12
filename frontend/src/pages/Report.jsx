@@ -104,9 +104,19 @@ const Report = () => {
 
     try {
       let imageUrl = '';
+      let imageBase64 = '';
+
       if (image) {
-        // Mock upload
-        imageUrl = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?q=80&w=2613&auto=format&fit=crop';
+        // Mock URL for UI purposes
+        imageUrl = URL.createObjectURL(image); // This is a local blob, won't work on backend if not uploaded
+
+        // Convert to Base64 for real AI analysis
+        const reader = new FileReader();
+        const base64Promise = new Promise((resolve) => {
+          reader.onload = (e) => resolve(e.target.result);
+        });
+        reader.readAsDataURL(image);
+        imageBase64 = await base64Promise;
       }
 
       const reportData = {
@@ -114,7 +124,10 @@ const Report = () => {
         description,
         location: { ...location, address },
         reportType,
-        imageUrl,
+        imageUrl: imageBase64 ? '' : imageUrl, // If sending base64, usually we'd upload to storage first. For now, pass base64?
+        // Note: Sending huge base64 in JSON body might hit limits. 
+        // For Hackathon: Send base64. Ideally: Upload to Firebase Storage -> Get URL -> Send URL.
+        imageBase64: imageBase64,
         additionalInfo: analysis ? JSON.stringify(analysis) : ''
       };
 
@@ -177,8 +190,8 @@ const Report = () => {
                     type="button"
                     onClick={() => setReportType(type.value)}
                     className={`relative p-4 rounded-xl border-2 text-left transition-all duration-200 group ${reportType === type.value
-                        ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]'
-                        : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
+                      ? 'border-green-500 bg-green-50 shadow-md transform scale-[1.02]'
+                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
                       }`}
                   >
                     <span className="text-2xl mb-2 block">{type.icon}</span>

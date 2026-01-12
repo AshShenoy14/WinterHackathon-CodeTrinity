@@ -311,25 +311,41 @@ const Dashboard = () => {
                           )}
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{report.description}</p>
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                          {report.aiAnalysis?.summary ? (
+                            <span className="font-medium text-purple-900 bg-purple-50 px-2 py-0.5 rounded mr-2">AI Summary: {report.aiAnalysis.summary}</span>
+                          ) : report.description}
+                        </p>
 
                         {/* AI Insights Snippet */}
                         {report.aiAnalysis && (
-                          <div className="mb-3 p-3 bg-gray-50 rounded-lg text-xs space-y-1 border border-gray-100">
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-700">Feasibility:</span>
-                              <span className={report.aiAnalysis.feasibilityScore > 70 ? "text-green-600" : "text-yellow-600"}>
-                                {report.aiAnalysis.feasibilityScore}% ({report.aiAnalysis.plantation_possible ? 'Possible' : 'Difficult'})
-                              </span>
+                          <div className="mb-3 p-3 bg-gray-50 rounded-lg text-xs space-y-2 border border-gray-100">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex flex-col">
+                                <span className="font-bold text-gray-500 uppercase text-[10px]">Feasibility</span>
+                                <span className={(report.aiAnalysis.feasibilityScore || 0) > 70 ? "text-green-600 font-bold" : "text-yellow-600 font-bold"}>
+                                  {report.aiAnalysis.feasibilityScore !== undefined ? `${report.aiAnalysis.feasibilityScore}%` : 'N/A'}
+                                  <span className="font-normal text-gray-500 ml-1">
+                                    ({report.aiAnalysis.plantation_possible ? 'Viable' : 'Difficult'})
+                                  </span>
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="font-bold text-gray-500 uppercase text-[10px]">Land Est.</span>
+                                <span className="text-gray-800 font-bold">{report.aiAnalysis.land_ownership_estimate || 'Pending'}</span>
+                              </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-700">Land Status:</span>
-                              <span className="text-gray-600">{report.aiAnalysis.land_ownership_estimate || 'Pending Check'}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-700">Cooling Impact:</span>
-                              <span className="text-blue-600 font-medium">{report.aiAnalysis.cooling_impact || 'Calculating...'}</span>
-                            </div>
+
+                            {/* Vision Tags */}
+                            {report.aiAnalysis.labels && report.aiAnalysis.labels.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1 pt-2 border-t border-gray-100">
+                                {report.aiAnalysis.labels.slice(0, 3).map((l, i) => (
+                                  <span key={i} className="px-1.5 py-0.5 bg-blue-50 text-blue-600 rounded text-[10px] border border-blue-100">
+                                    {l.description}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         )}
 

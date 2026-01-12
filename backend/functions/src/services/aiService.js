@@ -5,26 +5,43 @@ const logger = require("firebase-functions/logger");
 // Initialize services
 // Note: In a real production env, ensure GOOGLE_APPLICATION_CREDENTIALS is set for Vision API
 // and GEMINI_API_KEY is available.
+// Initialize services
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "YOUR_API_KEY_HERE");
 const visionClient = new ImageAnnotatorClient();
 
 /**
  * Analyzes an image using Google Cloud Vision API
- * @param {string} imageUrl 
+ * @param {string} imageUrlOrBase64 - URL or Base64 string
  * @returns {Promise<Object>} Analysis results
  */
-exports.analyzeImage = async (imageUrl) => {
-    if (!imageUrl) return null;
+exports.analyzeImage = async (imageUrlOrBase64) => {
+    if (!imageUrlOrBase64) return null;
 
     try {
-        const [result] = await visionClient.annotateImage({
-            image: { source: { imageUri: imageUrl } },
-            features: [
-                { type: 'LABEL_DETECTION', maxResults: 10 },
-                { type: 'OBJECT_LOCALIZATION', maxResults: 10 },
-                { type: 'LANDMARK_DETECTION', maxResults: 5 }
-            ]
-        });
+        let request = {};
+        // Check if it's a data URI (base64)
+        if (imageUrlOrBase64.startsWith('data:image')) {
+            const base64Content = imageUrlOrBase64.split(';base64,').pop();
+            request = {
+                image: { content: base64Content },
+                features: [
+                    { type: 'LABEL_DETECTION', maxResults: 10 },
+                    { type: 'OBJECT_LOCALIZATION', maxResults: 10 },
+                    { type: 'LANDMARK_DETECTION', maxResults: 5 }
+                ]
+            };
+        } else {
+            request = {
+                image: { source: { imageUri: imageUrlOrBase64 } },
+                features: [
+                    { type: 'LABEL_DETECTION', maxResults: 10 },
+                    { type: 'OBJECT_LOCALIZATION', maxResults: 10 },
+                    { type: 'LANDMARK_DETECTION', maxResults: 5 }
+                ]
+            };
+        }
+
+        const [result] = await visionClient.annotateImage(request);
 
         return {
             labels: result.labelAnnotations?.map(label => ({
@@ -44,19 +61,12 @@ exports.analyzeImage = async (imageUrl) => {
         };
     } catch (error) {
         logger.warn('Image analysis failed:', error);
-        // Return null or partial error object, but don't crash
         return { error: 'Image analysis failed' };
     }
 };
 
 /**
  * Generates an analysis of the greening proposal using Gemini
- * @param {Object} data - The report data
- * @param {string} data.reportType - Type of report
- * @param {Object} data.location - Location object
- * @param {string} data.description - User description
- * @param {Object} [data.imageAnalysis] - Optional vision API results
- * @returns {Promise<Object>} Gemini analysis result
  */
 exports.generateReportAnalysis = async (data) => {
     const { reportType, location, description, imageAnalysis } = data;
@@ -65,40 +75,34 @@ exports.generateReportAnalysis = async (data) => {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
-As an urban planning and environmental expert, analyze this greening proposal based on the data provided.
+Analyze this urban greening proposal. return VALID JSON only.
 
-Report Data:
-- Reported Type: ${reportType}
-- Location: ${location.address || `${location.lat}, ${location.lng}`}
-- User Description: ${description}
+Report Type: ${reportType}
+Description: ${description}
+Location: ${location?.address || 'Unknown'}
 
-Image Vision Analysis (Automatic):
 ${imageAnalysis ? `
-- Labels: ${imageAnalysis.labels?.map(l => l.description).join(', ') || 'None'}
-- Objects: ${imageAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
-- Landmarks: ${imageAnalysis.landmarks?.map(l => l.description).join(', ') || 'None'}
-` : 'No image analysis available.'}
+Vision Analysis:
+Labels: ${imageAnalysis.labels?.map(l => l.description).join(', ')}
+Objects: ${imageAnalysis.objects?.map(o => o.name).join(', ')}
+` : ''}
 
-TASK:
-1. Verify if the Reported Type matches the visual/description data. If not, suggest the correct category (tree_loss, heat_hotspot, unused_space).
-2. Assess "Plantation Feasibility": Is it physically possible to plant trees here? (Consider pavement, space, etc.)
-3. Estimate "Land Ownership": Look for cues (fences, park benches, sidewalks) to guess if it's "Public/Government" or "Private".
-4. Estimate "Cooling Impact": High/Medium/Low if greened.
+Task:
+1. Feasibility (0-100): Can trees be planted here?
+2. Impact: Cooling effect?
+3. Ownership: Public or Private (guess based on visual cues)?
+4. Category: confirm report type.
+5. Summary: 1 sentence summary.
 
-OUTPUT JSON FORMAT (Do not include markdown blocks):
+Output JSON scheme:
 {
-  "feasibilityScore": number (0-100),
+  "feasibilityScore": number,
   "plantation_possible": boolean,
   "land_ownership_estimate": "Public" | "Private" | "Unknown",
   "suggested_category": "tree_loss" | "heat_hotspot" | "unused_space",
   "cooling_impact": "High" | "Medium" | "Low",
-  "impactScore": number (0-100),
-  "recommendations": ["string"],
-  "challenges": ["string"],
-  "solutions": ["string"],
-  "estimatedTimeline": "string",
-  "costConsiderations": "string",
-  "detailedAnalysis": "string"
+  "summary": "string",
+  "recommendations": ["string"]
 }
 `;
 
@@ -106,22 +110,31 @@ OUTPUT JSON FORMAT (Do not include markdown blocks):
         const response = await result.response;
         const text = response.text();
 
-        // Clean up potential markdown code blocks if Gemini returns them
+        // Robust cleaning
         const jsonStr = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        // Find the first '{' and last '}' to handle any preamble text
+        const firstBrace = jsonStr.indexOf('{');
+        const lastBrace = jsonStr.lastIndexOf('}');
+
+        if (firstBrace !== -1 && lastBrace !== -1) {
+            const cleanJson = jsonStr.substring(firstBrace, lastBrace + 1);
+            return JSON.parse(cleanJson);
+        }
+
         return JSON.parse(jsonStr);
 
     } catch (error) {
         logger.error('Gemini analysis failed:', error);
-        // Fallback logic
         return {
             feasibilityScore: 50,
-            plantation_possible: true, // Optimistic fallback
+            plantation_possible: true,
             land_ownership_estimate: "Unknown",
             suggested_category: reportType,
             cooling_impact: "Medium",
-            impactScore: 50,
-            recommendations: ["Conduct manual site assessment"],
-            error: 'AI analysis failed, using fallback'
+            summary: "Analysis pending manual review.",
+            recommendations: ["Site check required"],
+            error: 'AI analysis failed'
         };
     }
 };
