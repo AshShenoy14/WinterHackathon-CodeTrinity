@@ -1,77 +1,73 @@
+// src/components/MapView.jsx
+import React from 'react';
 import { MapPin } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
 
-export default function MapView({ reports = [] }) {
+// Fix for default marker icons in react-leaflet
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+const MapView = ({ reports = [] }) => {
+  // Default coordinates (can be set to user's location)
+  const defaultCenter = [51.505, -0.09];
+  const zoom = 13;
+
   return (
-    <div className="relative w-full h-full min-h-[400px] bg-gradient-to-br from-green-50 to-blue-50 rounded-lg overflow-hidden shadow-inner">
-      {/* Map Placeholder with Grid */}
-      <div className="absolute inset-0 opacity-20">
-        <div className="grid grid-cols-8 grid-rows-6 h-full">
-          {Array.from({ length: 48 }).map((_, i) => (
-            <div key={i} className="border border-green-200"></div>
-          ))}
-        </div>
-      </div>
-
-      {/* Map Pins */}
-      <div className="relative h-full p-8">
-        {reports.length > 0 ? (
-          reports.map((report, index) => (
-            <div
-              key={report.id || index}
-              className="absolute group cursor-pointer"
-              style={{
-                left: `${(index * 23 + 15) % 80}%`,
-                top: `${(index * 31 + 20) % 70}%`,
-              }}
-            >
-              <div className="relative">
-                <MapPin className="w-8 h-8 text-red-600 fill-red-500 drop-shadow-lg animate-bounce" />
-                <div className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full border-2 border-white animate-pulse"></div>
+    <div className="h-[500px] w-full">
+      <MapContainer 
+        center={defaultCenter} 
+        zoom={zoom} 
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={false}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        
+        {reports.map((report) => (
+          <Marker 
+            key={report.id} 
+            position={[
+              defaultCenter[0] + (Math.random() * 0.02 - 0.01),
+              defaultCenter[1] + (Math.random() * 0.02 - 0.01)
+            ]}
+          >
+            <Popup>
+              <div className="space-y-2">
+                <h4 className="font-semibold">{report.title}</h4>
+                <p className="text-sm text-gray-600">{report.location}</p>
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  report.status === 'resolved' 
+                    ? 'bg-green-100 text-green-800' 
+                    : report.status === 'in-progress'
+                    ? 'bg-blue-100 text-blue-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {report.status.split('-').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                  ).join(' ')}
+                </span>
               </div>
-              <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white px-3 py-2 rounded-lg shadow-lg whitespace-nowrap z-10">
-                <p className="text-sm font-medium text-gray-900">{report.title}</p>
-                <p className="text-xs text-gray-500">{report.location}</p>
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500">No reports to display</p>
-            </div>
-          </div>
-        )}
-
-        {/* Heat Zone Indicators */}
-        {reports.length > 3 && (
-          <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
-            <p className="text-xs font-semibold text-gray-700 mb-2">Heat Zones</p>
-            <div className="flex items-center gap-2 text-xs">
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-gray-600">High Activity</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs mt-1">
-              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span className="text-gray-600">Medium Activity</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs mt-1">
-              <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-gray-600">Low Activity</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Map Controls */}
-      <div className="absolute bottom-4 right-4 flex flex-col gap-2">
-        <button className="w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
-          <span className="text-lg font-bold text-gray-700">+</span>
-        </button>
-        <button className="w-10 h-10 bg-white rounded-lg shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors">
-          <span className="text-lg font-bold text-gray-700">−</span>
-        </button>
-      </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
     </div>
   );
-}
+};
+
+export default MapView;
