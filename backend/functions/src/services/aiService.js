@@ -65,29 +65,34 @@ exports.generateReportAnalysis = async (data) => {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
-As an urban planning and environmental expert, analyze this greening proposal:
+As an urban planning and environmental expert, analyze this greening proposal based on the data provided.
 
-Report Type: ${reportType}
-Location: ${location.address || `${location.lat}, ${location.lng}`}
-Description: ${description}
+Report Data:
+- Reported Type: ${reportType}
+- Location: ${location.address || `${location.lat}, ${location.lng}`}
+- User Description: ${description}
 
+Image Vision Analysis (Automatic):
 ${imageAnalysis ? `
-Image Analysis Results:
-- Labels detected: ${imageAnalysis.labels?.map(l => l.description).join(', ') || 'None'}
-- Objects detected: ${imageAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
-` : ''}
+- Labels: ${imageAnalysis.labels?.map(l => l.description).join(', ') || 'None'}
+- Objects: ${imageAnalysis.objects?.map(o => o.name).join(', ') || 'None'}
+- Landmarks: ${imageAnalysis.landmarks?.map(l => l.description).join(', ') || 'None'}
+` : 'No image analysis available.'}
 
-Please provide:
-1. Feasibility score (0-100) for implementing greening at this location
-2. Environmental impact score (0-100) 
-3. Specific recommendations for implementation
-4. Potential challenges and solutions
-5. Estimated timeline and cost considerations
+TASK:
+1. Verify if the Reported Type matches the visual/description data. If not, suggest the correct category (tree_loss, heat_hotspot, unused_space).
+2. Assess "Plantation Feasibility": Is it physically possible to plant trees here? (Consider pavement, space, etc.)
+3. Estimate "Land Ownership": Look for cues (fences, park benches, sidewalks) to guess if it's "Public/Government" or "Private".
+4. Estimate "Cooling Impact": High/Medium/Low if greened.
 
-Respond in JSON format with this structure:
+OUTPUT JSON FORMAT (Do not include markdown blocks):
 {
-  "feasibilityScore": number,
-  "impactScore": number,
+  "feasibilityScore": number (0-100),
+  "plantation_possible": boolean,
+  "land_ownership_estimate": "Public" | "Private" | "Unknown",
+  "suggested_category": "tree_loss" | "heat_hotspot" | "unused_space",
+  "cooling_impact": "High" | "Medium" | "Low",
+  "impactScore": number (0-100),
   "recommendations": ["string"],
   "challenges": ["string"],
   "solutions": ["string"],
@@ -107,9 +112,13 @@ Respond in JSON format with this structure:
 
     } catch (error) {
         logger.error('Gemini analysis failed:', error);
-        // Return fallback logic
+        // Fallback logic
         return {
             feasibilityScore: 50,
+            plantation_possible: true, // Optimistic fallback
+            land_ownership_estimate: "Unknown",
+            suggested_category: reportType,
+            cooling_impact: "Medium",
             impactScore: 50,
             recommendations: ["Conduct manual site assessment"],
             error: 'AI analysis failed, using fallback'

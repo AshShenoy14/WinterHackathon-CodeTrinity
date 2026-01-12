@@ -64,7 +64,9 @@ exports.createReport = onRequest({
       imageUrl: imageUrl || '',
       additionalInfo: additionalInfo || '',
       userId: decodedToken.uid,
-      status: 'pending',
+      userId: decodedToken.uid,
+      status: 'pending_analysis', // NEW INITIAL STATUS
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       upvotes: 0,
@@ -94,12 +96,22 @@ exports.createReport = onRequest({
       });
 
       // 3. Update report with analysis
-      await reportRef.update({
+      // 3. Update report with analysis & Move to Next Stage
+      const updatePayload = {
         aiAnalysis: {
           ...aiResult,
           analyzedAt: admin.firestore.FieldValue.serverTimestamp()
-        }
-      });
+        },
+        status: 'pending_review' // Move to Community Review Stage automatically
+      };
+
+      // Auto-correct category if confidence is high (implied by suggestion)
+      if (aiResult.suggested_category && aiResult.suggested_category !== reportType) {
+        updatePayload.reportType = aiResult.suggested_category;
+        updatePayload.originalReportType = reportType; // Keep track of user's original choice
+      }
+
+      await reportRef.update(updatePayload);
 
     } catch (aiError) {
       logger.error("Auto-AI Analysis failed during createReport", aiError);

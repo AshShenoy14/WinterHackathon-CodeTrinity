@@ -262,9 +262,11 @@ const Dashboard = () => {
             </Card>
           </div>
 
+
+          {/* Enhanced Status & AI Feedback Section */}
           <Card hover={false} className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Recent Reports</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Recent Reports & Analysis</h3>
               <Button variant="ghost" size="sm">
                 View All
               </Button>
@@ -273,30 +275,75 @@ const Dashboard = () => {
             <div className="space-y-4">
               {reports.slice(0, 5).map((report) => {
                 const StatusIcon = getStatusIcon(report.status);
+
+                // Determine detailed status message
+                let statusMessage = "Processing...";
+                let statusColor = "secondary";
+
+                if (report.status === 'pending_analysis') {
+                  statusMessage = "AI Analysis: Proposals are pending feasibility and cooling impact assessment.";
+                  statusColor = "warning";
+                } else if (report.status === 'pending_review' || report.status === 'pending') {
+                  statusMessage = "Review and Voting: Ideas are pending community evaluation and expert feedback.";
+                  statusColor = "info";
+                } else if (report.status === 'pending_approval') {
+                  statusMessage = "Government Approval: Final execution is pending permit and funding checks.";
+                  statusColor = "primary";
+                } else if (report.status === 'approved') {
+                  statusMessage = "Approved for Implementation";
+                  statusColor = "success";
+                }
+
                 return (
-                  <div key={report.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div key={report.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow group">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
-                          <h4 className="font-medium text-gray-900">{report.title}</h4>
-                          <Badge variant={getStatusColor(report.status)} size="sm">
-                            {report.status.replace('_', ' ')}
+                          <h4 className="font-medium text-gray-900 group-hover:text-green-700 transition-colors">{report.title}</h4>
+                          <Badge variant={statusColor} size="sm">
+                            {report.status.replace('_', ' ').toUpperCase()}
                           </Badge>
                           {report.aiAnalysis && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 border border-purple-200">
+                            <Badge variant="purple" size="sm" className="flex items-center gap-1">
                               <Activity className="w-3 h-3" />
                               AI Verified
-                            </span>
+                            </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
+
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{report.description}</p>
+
+                        {/* AI Insights Snippet */}
+                        {report.aiAnalysis && (
+                          <div className="mb-3 p-3 bg-gray-50 rounded-lg text-xs space-y-1 border border-gray-100">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700">Feasibility:</span>
+                              <span className={report.aiAnalysis.feasibilityScore > 70 ? "text-green-600" : "text-yellow-600"}>
+                                {report.aiAnalysis.feasibilityScore}% ({report.aiAnalysis.plantation_possible ? 'Possible' : 'Difficult'})
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700">Land Status:</span>
+                              <span className="text-gray-600">{report.aiAnalysis.land_ownership_estimate || 'Pending Check'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-gray-700">Cooling Impact:</span>
+                              <span className="text-blue-600 font-medium">{report.aiAnalysis.cooling_impact || 'Calculating...'}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-md border border-orange-100">
+                          <Clock className="w-3.5 h-3.5" />
+                          <span className="font-medium">{statusMessage}</span>
+                        </div>
+
+                        <div className="flex items-center space-x-4 text-xs text-gray-400 mt-3">
                           <div className="flex items-center space-x-1">
-                            <MapPin className="w-4 h-4" />
+                            <MapPin className="w-3.5 h-3.5" />
                             <span>{report.location.address}</span>
                           </div>
                           <div className="flex items-center space-x-1">
-                            <StatusIcon className="w-4 h-4" />
                             <span>{new Date(report.createdAt?.seconds * 1000).toLocaleDateString()}</span>
                           </div>
                         </div>
@@ -348,6 +395,53 @@ const Dashboard = () => {
               </div>
             </Card>
           )}
+
+          {/* Future Scope Section */}
+          <div className="mt-8 mb-12">
+            <div className="flex items-center space-x-2 mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Future Scope</h3>
+              <span className="px-2 py-1 rounded-full bg-gray-100 text-xs font-medium text-gray-500 border border-gray-200">Pending Implementation</span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card className="p-6 border-t-4 border-teal-500 bg-gradient-to-br from-white to-teal-50/30">
+                <div className="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-600 mb-4">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-gray-900 mb-2">Multi-City Deployment</h4>
+                <p className="text-sm text-gray-600">Rolling out the platform beyond the initial focus on Bangalore and Mangalore.</p>
+                <div className="mt-4 pt-4 border-t border-teal-100 flex justify-between items-center text-xs text-teal-700 font-medium">
+                  <span>Expansion Phase</span>
+                  <span className="bg-teal-100 px-2 py-1 rounded">+2 Priority</span>
+                </div>
+              </Card>
+
+              <Card className="p-6 border-t-4 border-emerald-500 bg-gradient-to-br from-white to-emerald-50/30">
+                <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 mb-4">
+                  <Activity className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-gray-900 mb-2">Carbon Impact Reporting</h4>
+                <p className="text-sm text-gray-600">Tracking long-term carbon absorption and environmental ROI through advanced analytics.</p>
+                <div className="mt-4 pt-4 border-t border-emerald-100 flex justify-between items-center text-xs text-emerald-700 font-medium">
+                  <span>Data Analytics</span>
+                  <span className="bg-emerald-100 px-2 py-1 rounded">+2 Priority</span>
+                </div>
+              </Card>
+
+              <Card className="p-6 border-t-4 border-indigo-500 bg-gradient-to-br from-white to-indigo-50/30">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mb-4">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <h4 className="font-bold text-gray-900 mb-2">Smart City Integration</h4>
+                <p className="text-sm text-gray-600">Connecting via APIs to municipal smart city systems for automated data exchange.</p>
+                <div className="mt-4 pt-4 border-t border-indigo-100 flex justify-between items-center text-xs text-indigo-700 font-medium">
+                  <span>API Integration</span>
+                  <span className="bg-indigo-100 px-2 py-1 rounded">+1 Priority</span>
+                </div>
+              </Card>
+            </div>
+          </div>
+
         </div>
       </div>
     </PageTransition>
