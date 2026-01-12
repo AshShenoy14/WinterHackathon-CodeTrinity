@@ -1,11 +1,15 @@
 import React, { useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Camera, MapPin, Upload, X, Loader2 } from 'lucide-react';
+import { Camera, MapPin, Upload, X, Loader2, Sparkles, Leaf, TreePine, ThermometerSun } from 'lucide-react';
 import { db, storage } from '../services/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { analyzeImageWithVision, predictFeasibilityAndImpact, reverseGeocode } from '../services/googleCloud';
 import toast from 'react-hot-toast';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import Badge from '../components/ui/Badge';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const Report = () => {
   const { user } = useAuth();
@@ -20,9 +24,27 @@ const Report = () => {
   const fileInputRef = useRef(null);
 
   const reportTypes = [
-    { value: 'vacant_land', label: 'Unused/Vacant Land', icon: '🏚️' },
-    { value: 'tree_loss', label: 'Tree Loss Area', icon: '🌳' },
-    { value: 'heat_hotspot', label: 'Heat-Prone Hotspot', icon: '🔥' }
+    { 
+      value: 'vacant_land', 
+      label: 'Unused/Vacant Land', 
+      icon: '🏚️',
+      description: 'Empty spaces that could be transformed',
+      color: 'warning'
+    },
+    { 
+      value: 'tree_loss', 
+      label: 'Tree Loss Area', 
+      icon: '🌳',
+      description: 'Areas where trees have been removed',
+      color: 'error'
+    },
+    { 
+      value: 'heat_hotspot', 
+      label: 'Heat-Prone Hotspot', 
+      icon: '🔥',
+      description: 'Areas experiencing high temperatures',
+      color: 'danger'
+    }
   ];
 
   const getCurrentLocation = () => {
@@ -134,43 +156,75 @@ const Report = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Report Greening Opportunity</h1>
-          <p className="text-gray-600 mb-8">Help identify areas that need greening in your community</p>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Report Type Selection */}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-50">
+      {/* Header */}
+      <div className="bg-white/80 backdrop-blur-xl border-b border-secondary-200/60 sticky top-0 z-40">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="flex items-center space-x-3">
+            <div className="p-3 bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-lg">
+              <Leaf className="w-6 h-6 text-white" />
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Report Type
-              </label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <h1 className="text-3xl font-bold text-secondary-900 bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
+                Report Greening Opportunity
+              </h1>
+              <p className="text-secondary-600 mt-1">Help identify areas that need greening in your community</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Report Type Selection */}
+          <Card hover={true} animated={true} className="overflow-hidden">
+            <div className="p-6 border-b border-secondary-200/60">
+              <h2 className="text-xl font-semibold text-secondary-900 flex items-center">
+                <Sparkles className="w-5 h-5 mr-2 text-primary-600" />
+                Select Report Type
+              </h2>
+              <p className="text-sm text-secondary-600 mt-1">Choose the type of greening opportunity you want to report</p>
+            </div>
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {reportTypes.map((type) => (
                   <button
                     key={type.value}
                     type="button"
                     onClick={() => setReportType(type.value)}
-                    className={`p-4 rounded-lg border-2 transition-all ${
+                    className={`relative p-6 rounded-2xl border-2 transition-all duration-300 group ${
                       reportType === type.value
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-primary-100 shadow-lg scale-105'
+                        : 'border-secondary-200 bg-white hover:border-primary-300 hover:shadow-md hover:-translate-y-1'
                     }`}
                   >
-                    <div className="text-2xl mb-2">{type.icon}</div>
-                    <div className="text-sm font-medium">{type.label}</div>
+                    <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">{type.icon}</div>
+                    <div className="text-sm font-semibold text-secondary-900 mb-1">{type.label}</div>
+                    <div className="text-xs text-secondary-600">{type.description}</div>
+                    {reportType === type.value && (
+                      <div className="absolute -top-2 -right-2">
+                        <Badge variant="success" size="sm" dot pulse>
+                          Selected
+                        </Badge>
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
             </div>
+          </Card>
 
-            {/* Image Capture */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+          {/* Image Capture */}
+          <Card hover={true} animated={true} className="overflow-hidden">
+            <div className="p-6 border-b border-secondary-200/60">
+              <h2 className="text-xl font-semibold text-secondary-900 flex items-center">
+                <Camera className="w-5 h-5 mr-2 text-primary-600" />
                 Capture Photo
-              </label>
-              <div className="flex items-center space-x-4">
+              </h2>
+              <p className="text-sm text-secondary-600 mt-1">Take a photo of the area that needs greening</p>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center space-x-4 mb-6">
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -182,54 +236,68 @@ const Report = () => {
                 />
                 <label
                   htmlFor="image-input"
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 cursor-pointer transition-colors"
+                  className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:from-primary-600 hover:to-primary-700 transition-all duration-300 shadow-button hover:shadow-button-hover cursor-pointer group"
                 >
-                  <Camera className="w-5 h-5" />
+                  <Camera className="w-5 h-5 group-hover:scale-110 transition-transform" />
                   <span>Capture Photo</span>
                 </label>
                 {image && (
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm text-gray-600">{image.name}</span>
-                    <button
+                    <span className="text-sm text-secondary-600 font-medium">{image.name}</span>
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => {
                         setImage(null);
                         setAnalysis(null);
                         if (fileInputRef.current) fileInputRef.current.value = '';
                       }}
-                      className="text-red-500 hover:text-red-700"
+                      icon={X}
                     >
-                      <X className="w-4 h-4" />
-                    </button>
+                      Remove
+                    </Button>
                   </div>
                 )}
               </div>
               
               {image && (
-                <div className="mt-4">
+                <div className="relative">
                   <img
                     src={URL.createObjectURL(image)}
                     alt="Captured"
-                    className="w-full h-64 object-cover rounded-lg"
+                    className="w-full h-64 object-cover rounded-2xl shadow-lg"
                   />
+                  {isAnalyzing && (
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                      <LoadingSpinner size="lg" color="white" text="Analyzing image..." />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
+          </Card>
 
-            {/* Location Capture */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+          {/* Location Capture */}
+          <Card hover={true} animated={true} className="overflow-hidden">
+            <div className="p-6 border-b border-secondary-200/60">
+              <h2 className="text-xl font-semibold text-secondary-900 flex items-center">
+                <MapPin className="w-5 h-5 mr-2 text-primary-600" />
                 Location
-              </label>
-              <div className="flex items-center space-x-4">
-                <button
+              </h2>
+              <p className="text-sm text-secondary-600 mt-1">Provide the location of the greening opportunity</p>
+            </div>
+            <div className="p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <Button
                   type="button"
+                  variant="gradient"
                   onClick={getCurrentLocation}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  icon={MapPin}
+                  disabled={!!location}
                 >
-                  <MapPin className="w-5 h-5" />
-                  <span>Get Current Location</span>
-                </button>
+                  {location ? 'Location Captured' : 'Get Current Location'}
+                </Button>
                 {location && (
                   <div className="flex-1">
                     <input
@@ -237,80 +305,122 @@ const Report = () => {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Address will appear here..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-secondary-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
                     />
                   </div>
                 )}
               </div>
+              {location && (
+                <div className="mt-4 p-4 bg-success-50 border border-success-200 rounded-xl">
+                  <p className="text-sm text-success-700">
+                    <strong>Location captured:</strong> {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                  </p>
+                </div>
+              )}
             </div>
+          </Card>
 
-            {/* Description */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+          {/* Description */}
+          <Card hover={true} animated={true} className="overflow-hidden">
+            <div className="p-6 border-b border-secondary-200/60">
+              <h2 className="text-xl font-semibold text-secondary-900 flex items-center">
+                <Leaf className="w-5 h-5 mr-2 text-primary-600" />
                 Description
-              </label>
+              </h2>
+              <p className="text-sm text-secondary-600 mt-1">Describe the area and why it needs greening</p>
+            </div>
+            <div className="p-6">
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
-                placeholder="Describe the area and why it needs greening..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                placeholder="Tell us more about this area and why it would benefit from greening..."
+                className="w-full px-4 py-3 border border-secondary-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 resize-none"
               />
             </div>
+          </Card>
 
-            {/* AI Analysis Results */}
-            {analysis && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">AI Analysis Results</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Land Type:</span> {analysis.landType.replace('_', ' ')}
+          {/* AI Analysis Results */}
+          {analysis && (
+            <Card variant="success" hover={true} animated={true} className="overflow-hidden">
+              <div className="p-6 border-b border-success-200/60">
+                <h2 className="text-xl font-semibold text-success-900 flex items-center">
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  AI Analysis Results
+                </h2>
+                <p className="text-sm text-success-700 mt-1">Our AI has analyzed your image and provided insights</p>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-white rounded-xl">
+                      <span className="text-sm font-medium text-secondary-700">Land Type</span>
+                      <Badge variant="primary" size="sm">
+                        {analysis.landType.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-white rounded-xl">
+                      <span className="text-sm font-medium text-secondary-700">Vegetation Cover</span>
+                      <Badge variant="info" size="sm">
+                        {(analysis.vegetationCover * 100).toFixed(1)}%
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-white rounded-xl">
+                      <span className="text-sm font-medium text-secondary-700">Built Area</span>
+                      <Badge variant="warning" size="sm">
+                        {(analysis.builtAreaPercentage * 100).toFixed(1)}%
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium">Vegetation Cover:</span> {(analysis.vegetationCover * 100).toFixed(1)}%
-                  </div>
-                  <div>
-                    <span className="font-medium">Suitability Score:</span> {(analysis.suitabilityScore * 100).toFixed(1)}%
-                  </div>
-                  <div>
-                    <span className="font-medium">Built Area:</span> {(analysis.builtAreaPercentage * 100).toFixed(1)}%
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center p-3 bg-white rounded-xl">
+                      <span className="text-sm font-medium text-secondary-700">Suitability Score</span>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-20 bg-secondary-200 rounded-full h-2">
+                          <div 
+                            className="bg-gradient-to-r from-success-500 to-success-600 h-2 rounded-full"
+                            style={{width: `${analysis.suitabilityScore * 100}%`}}
+                          ></div>
+                        </div>
+                        <Badge variant="success" size="sm">
+                          {(analysis.suitabilityScore * 100).toFixed(1)}%
+                        </Badge>
+                      </div>
+                    </div>
+                    {analysis.recommendations && (
+                      <div className="p-3 bg-white rounded-xl">
+                        <p className="text-sm font-medium text-secondary-700 mb-2">Recommendations:</p>
+                        <ul className="space-y-1">
+                          {analysis.recommendations.map((rec, index) => (
+                            <li key={index} className="text-xs text-secondary-600 flex items-start">
+                              <TreePine className="w-3 h-3 mr-1 mt-0.5 text-success-500 flex-shrink-0" />
+                              {rec}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 </div>
-                {analysis.recommendations && (
-                  <div className="mt-3">
-                    <span className="font-medium">Recommendations:</span>
-                    <ul className="list-disc list-inside mt-1 text-sm">
-                      {analysis.recommendations.map((rec, index) => (
-                        <li key={index}>{rec}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
               </div>
-            )}
+            </Card>
+          )}
 
-            {/* Submit Button */}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isSubmitting || !image || !location}
-                className="flex items-center space-x-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Submitting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-5 h-5" />
-                    <span>Submit Report</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Submit Button */}
+          <div className="flex justify-center">
+            <Button
+              type="submit"
+              variant="gradient"
+              size="lg"
+              isLoading={isSubmitting}
+              disabled={!image || !location}
+              icon={Upload}
+              className="px-8 py-4 text-lg"
+            >
+              {isSubmitting ? 'Submitting Report...' : 'Submit Report'}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
