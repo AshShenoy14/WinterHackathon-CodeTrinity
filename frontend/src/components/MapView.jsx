@@ -1,5 +1,5 @@
 // src/components/MapView.jsx
-import React from 'react';
+import React,{useMemo} from 'react';
 import { MapPin } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -20,10 +20,33 @@ let DefaultIcon = L.icon({
 
 L.Marker.prototype.options.icon = DefaultIcon;
 
+
+
+
 const MapView = ({ reports = [] }) => {
   // Default coordinates (can be set to user's location)
   const defaultCenter = [51.505, -0.09];
   const zoom = 13;
+
+  // Generate stable random offsets for each report (for demo purposes only)
+  const markerPositions = useMemo(() => {
+    return reports.map((report, idx) => {
+      // Use a seeded pseudo-random offset based on report id or index
+      // This ensures the same offset for the same report on every render
+      const seed = typeof report.id === 'number' ? report.id : idx;
+      function seededRandom(s) {
+        // Simple LCG
+        let x = Math.sin(s + 1) * 10000;
+        return x - Math.floor(x);
+      }
+      const latOffset = seededRandom(seed) * 0.02 - 0.01;
+      const lngOffset = seededRandom(seed + 1000) * 0.02 - 0.01;
+      return [
+        defaultCenter[0] + latOffset,
+        defaultCenter[1] + lngOffset
+      ];
+    });
+  }, [reports]);
 
   return (
     <div className="h-[500px] w-full">
@@ -37,14 +60,10 @@ const MapView = ({ reports = [] }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
-        {reports.map((report) => (
+        {reports.map((report, idx) => (
           <Marker 
             key={report.id} 
-            position={[
-              defaultCenter[0] + (Math.random() * 0.02 - 0.01),
-              defaultCenter[1] + (Math.random() * 0.02 - 0.01)
-            ]}
+            position={markerPositions[idx]}
           >
             <Popup>
               <div className="space-y-2">

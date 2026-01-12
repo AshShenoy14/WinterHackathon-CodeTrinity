@@ -47,52 +47,55 @@ const Home = () => {
     {
       icon: <MapPin className="w-6 h-6" />,
       title: 'Geo-Tagged Reports',
-      description: 'Pinpoint environmental issues with precise location tracking'
+      description: 'Pinpoint environmental issues with precise location tracking',
+      color: 'from-green-200 via-green-400 to-emerald-300'
     },
     {
       icon: <Users className="w-6 h-6" />,
       title: 'Community Driven',
-      description:'Join thousands making a difference in their communities'
+      description: 'Join thousands making a difference in their communities',
+      color: 'from-cyan-200 via-cyan-400 to-blue-300'
     },
     {
-  icon: <TrendingUp className="w-6 h-6" />,
-  title: 'Real-time Updates',
-  description: 'Track the progress of reported issues in real-time'
-},
-
+      icon: <TrendingUp className="w-6 h-6" />,
+      title: 'Real-time Updates',
+      description: 'Track the progress of reported issues in real-time',
+      color: 'from-yellow-200 via-yellow-400 to-orange-300'
+    },
     {
       icon: <Shield className="w-6 h-6" />,
       title: 'Verified Actions',
-      desciption:'Trust in our verification system for legitimate reports'
+      description: 'Trust in our verification system for legitimate reports',
+      color: 'from-pink-200 via-pink-400 to-rose-300'
     }
   ];
 
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-green-600 to-emerald-700 text-white pt-24 pb-16 md:pt-32 md:pb-24">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0 bg-[url('/grid.svg')]"></div>
-        </div>
+      <section className="relative overflow-hidden min-h-[600px] flex items-center justify-center bg-gradient-to-br from-green-600 to-emerald-700 text-white pt-24 pb-16 md:pt-32 md:pb-24">
+        {/* Hero background image with overlay */}
+        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80" alt="Green landscape" className="absolute inset-0 w-full h-full object-cover object-center opacity-60" />
+        <div className="absolute inset-0 bg-gradient-to-br from-green-700/80 via-emerald-800/60 to-cyan-900/60" />
         <Container>
           <div className="relative z-10 max-w-4xl mx-auto text-center px-4">
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-sm font-medium mb-6 animate-float">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-sm text-sm font-medium mb-6 animate-float shadow-lg">
               <Zap className="w-4 h-4 mr-2 text-yellow-300" />
               <span>Join the movement for a greener planet</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-6">
-              Turn Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-300 to-emerald-300">
+            <h1 className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 drop-shadow-lg">
+              Turn Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-200 via-emerald-200 to-cyan-200">
                 Environmental Concerns
               </span> Into Action
             </h1>
-            <p className="text-xl text-green-100 max-w-2xl mx-auto mb-10">
+            <p className="text-xl text-green-100 max-w-2xl mx-auto mb-10 drop-shadow">
               GreenPulse empowers citizens to report environmental issues, track their resolution, and contribute to a sustainable future.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <Button
                 as={Link}
                 to="/report"
-                className="btn-primary inline-flex items-center"
+                className="btn-primary inline-flex items-center text-lg font-bold shadow-xl"
               >
                 Report an Issue
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -101,7 +104,7 @@ const Home = () => {
                 as={Link}
                 to="/dashboard"
                 variant="outline"
-                className="bg-white/10 border-white/20 hover:bg-white/20"
+                className="bg-white/10 border-white/20 hover:bg-white/20 text-white font-bold shadow"
               >
                 View Dashboard
               </Button>
@@ -175,12 +178,24 @@ const Home = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="p-6 text-center group hover:border-green-200 transition-colors">
-                <div className="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600 group-hover:text-white transition-colors">
-                  {feature.icon}
+              <Card key={index} className="p-6 text-center group border-0 shadow-xl transition-colors bg-gradient-to-br hover:scale-105 duration-200 hover:shadow-2xl hover:brightness-105"
+                style={{ backgroundImage: `linear-gradient(135deg, var(--tw-gradient-stops))` }}
+                >
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4 text-white bg-gradient-to-br ${feature.color} group-hover:scale-110 transition-transform shadow-lg`}> 
+                  {/* Add a relevant feature image/icon */}
+                  <img
+                    src={
+                      index === 0 ? 'https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=crop&w=100&q=80'
+                        : index === 1 ? 'https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=100&q=80'
+                        : index === 2 ? 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=crop&w=100&q=80'
+                        : 'https://images.unsplash.com/photo-1465101178521-c1a9136a3b99?auto=format&fit=crop&w=100&q=80'
+                    }
+                    alt={feature.title}
+                    className="w-10 h-10 object-cover rounded-xl border-2 border-white shadow"
+                  />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.description}</p>
+                <p className="text-gray-700 font-medium">{feature.description}</p>
               </Card>
             ))}
           </div>

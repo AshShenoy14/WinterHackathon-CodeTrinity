@@ -64,22 +64,26 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {stats.map((stat) => {
                 const Icon = stat.icon;
+                const colorGradients = {
+                  blue: 'from-blue-100 via-blue-200 to-cyan-100',
+                  yellow: 'from-yellow-100 via-yellow-200 to-orange-100',
+                  green: 'from-green-100 via-emerald-100 to-lime-100',
+                  purple: 'from-purple-100 via-pink-100 to-rose-100',
+                };
                 return (
                   <div
                     key={stat.label}
-                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+                    className={`rounded-xl shadow-lg border-2 p-6 bg-gradient-to-br ${colorGradients[stat.color] || 'from-gray-100 to-gray-50'} border-${stat.color}-200`}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <div
-                        className={`w-12 h-12 rounded-lg flex items-center justify-center ${getColorClasses(
-                          stat.color
-                        )}`}
+                        className={`w-12 h-12 rounded-lg flex items-center justify-center bg-white/70 shadow ${getColorClasses(stat.color)}`}
                       >
                         <Icon className="w-6 h-6" />
                       </div>
                     </div>
                     <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-                    <div className="text-sm text-gray-600">{stat.label}</div>
+                    <div className="text-sm text-gray-700 font-semibold">{stat.label}</div>
                   </div>
                 );
               })}

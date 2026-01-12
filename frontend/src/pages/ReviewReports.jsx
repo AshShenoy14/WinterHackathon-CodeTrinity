@@ -91,27 +91,27 @@ export default function ReviewReports() {
             <h1 className="text-2xl font-bold text-gray-900 mb-6">Review Reports</h1>
 
             {/* Search and Filter Bar */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-cyan-50 rounded-lg shadow-lg border border-emerald-100 p-4 mb-6">
               <div className="flex flex-col md:flex-row gap-4">
                 {/* Search */}
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400" />
                   <input
                     type="text"
                     placeholder="Search reports by title or location..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="w-full pl-10 pr-4 py-3 input-field focus:ring-cyan-400 focus:border-cyan-400 outline-none"
                   />
                 </div>
 
                 {/* Filter */}
                 <div className="flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-gray-400" />
+                  <Filter className="w-5 h-5 text-cyan-400" />
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                    className="px-4 py-3 input-field focus:ring-cyan-400 focus:border-cyan-400 outline-none"
                   >
                     <option value="all">All Status ({statusCounts.all})</option>
                     <option value="pending">Pending ({statusCounts.pending})</option>
@@ -128,10 +128,10 @@ export default function ReviewReports() {
                 <button
                   key={status}
                   onClick={() => setFilterStatus(status)}
-                  className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                  className={`px-4 py-2 rounded-lg font-bold whitespace-nowrap transition-all duration-150 shadow-sm border-2 ${
                     filterStatus === status
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                      ? 'bg-gradient-to-r from-green-400 via-emerald-400 to-cyan-400 text-white border-cyan-400 scale-105'
+                      : 'bg-white text-gray-700 border-emerald-100 hover:bg-emerald-50'
                   }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)} ({statusCounts[status]})
@@ -142,13 +142,13 @@ export default function ReviewReports() {
 
           {/* Reports Grid */}
           {filteredReports.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 bg-gradient-to-br from-white via-green-50 to-cyan-50 p-4 rounded-xl">
               {filteredReports.map((report) => (
                 <ReportCard key={report.id} report={report} />
               ))}
             </div>
           ) : (
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+            <div className="bg-gradient-to-br from-white via-green-50 to-cyan-50 rounded-lg shadow-lg border border-emerald-100 p-12 text-center">
               <p className="text-gray-500">No reports found matching your criteria</p>
             </div>
           )}
