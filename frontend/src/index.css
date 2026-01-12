@@ -25,11 +25,24 @@
 }
 
 @layer components {
-  .animation-delay-100 { animation-delay: 100ms; }
-  .animation-delay-200 { animation-delay: 200ms; }
-  .animation-delay-300 { animation-delay: 300ms; }
-  .animation-delay-500 { animation-delay: 500ms; }
+  /* Animation delays */
+  .animation-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animation-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animation-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animation-delay-500 {
+    animation-delay: 500ms;
+  }
 
+  /* Glass morphism effects */
   .glass-morphism {
     @apply bg-white/80 backdrop-blur-xl border border-white/50 shadow-glass;
   }
@@ -38,6 +51,7 @@
     @apply bg-black/20 backdrop-blur-xl border border-white/20 shadow-glass;
   }
 
+  /* Gradient text */
   .gradient-text {
     @apply bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent;
   }
@@ -46,6 +60,7 @@
     @apply bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent;
   }
 
+  /* Enhanced buttons */
   .btn-glow {
     @apply relative overflow-hidden bg-gradient-to-r from-primary-500 to-primary-600 text-white font-semibold rounded-xl px-6 py-3 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-button-hover active:scale-95;
   }
@@ -59,6 +74,7 @@
     @apply opacity-100;
   }
 
+  /* Enhanced cards */
   .card-elevated {
     @apply bg-white border-0 shadow-card hover:shadow-card-hover transition-all duration-300 hover:-translate-y-1;
   }
@@ -67,6 +83,7 @@
     @apply bg-white/60 backdrop-blur-lg border border-white/50 shadow-glass;
   }
 
+  /* Input fields */
   .input-modern {
     @apply w-full px-4 py-3 bg-white border border-secondary-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200 outline-none hover:border-secondary-300;
   }
@@ -75,6 +92,7 @@
     @apply shadow-lg shadow-primary-500/20;
   }
 
+  /* Status indicators */
   .status-online {
     @apply relative;
   }
@@ -84,14 +102,24 @@
     @apply absolute -top-1 -right-1 w-3 h-3 bg-success-500 rounded-full border-2 border-white;
   }
 
+  /* Loading skeletons */
   .skeleton {
     @apply bg-gradient-to-r from-secondary-200 via-secondary-100 to-secondary-200 bg-size-200 animate-shimmer rounded;
   }
 
+  /* Mobile optimizations */
   @media (max-width: 768px) {
-    .container-mobile { @apply px-4; }
-    .text-responsive { @apply text-sm; }
-    .card-mobile { @apply rounded-xl p-4; }
+    .container-mobile {
+      @apply px-4;
+    }
+    
+    .text-responsive {
+      @apply text-sm;
+    }
+    
+    .card-mobile {
+      @apply rounded-xl p-4;
+    }
   }
 }
 
@@ -112,6 +140,7 @@
   @apply bg-primary-400;
 }
 
+/* Selection colors */
 ::selection {
   @apply bg-primary-100 text-primary-900;
 }
@@ -120,13 +149,17 @@
   @apply bg-primary-100 text-primary-900;
 }
 
+/* Focus visible styles */
 .focus-visible:focus {
   @apply outline-none ring-2 ring-primary-500 ring-offset-2;
 }
 
+/* Print styles */
 @media print {
-  .no-print { @apply hidden; }
-
+  .no-print {
+    @apply hidden;
+  }
+  
   body {
     @apply text-black bg-white;
   }
