@@ -1,8 +1,9 @@
 // src/components/ui/Button.jsx
 import React from 'react';
 import { Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
-const Button = ({ 
+const Button = ({
   children,
   variant = 'primary',
   size = 'md',
@@ -13,7 +14,7 @@ const Button = ({
   iconPosition = 'left',
   ...props
 }) => {
-  const baseStyles = 'relative inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none transform active:scale-95 group overflow-hidden';
+  const baseStyles = 'relative inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none transform group overflow-hidden';
 
   const variants = {
     primary: 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-button hover:shadow-button-hover focus:ring-primary-500 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity',
@@ -48,11 +49,12 @@ const Button = ({
     return <Icon className={`${iconSizes[size]} ${iconPosition === 'left' ? 'mr-2' : 'ml-2'} transition-transform group-hover:scale-110`} />;
   };
 
-  // Add default styles for visibility
-  const defaultClass = 'bg-blue-600 text-white border border-blue-700 shadow-lg px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-400';
+  const defaultClass = 'shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-400';
 
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.95 }}
       className={`${defaultClass} ${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
       disabled={isLoading || disabled}
       {...props}
@@ -67,7 +69,7 @@ const Button = ({
         {children}
         {iconPosition === 'right' && renderIcon()}
       </span>
-    </button>
+    </motion.button>
   );
 };
 
