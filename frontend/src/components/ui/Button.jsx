@@ -17,15 +17,15 @@ const Button = ({
   const baseStyles = 'relative inline-flex items-center justify-center rounded-xl font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none transform group overflow-hidden';
 
   const variants = {
-    primary: 'bg-gradient-to-r from-primary-500 to-primary-600 text-white hover:from-primary-600 hover:to-primary-700 shadow-button hover:shadow-button-hover focus:ring-primary-500 before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity',
-    secondary: 'bg-white text-secondary-700 border border-secondary-200 hover:bg-secondary-50 hover:border-primary-300 hover:text-primary-700 shadow-card hover:shadow-card-hover focus:ring-secondary-500',
-    success: 'bg-gradient-to-r from-success-500 to-success-600 text-white hover:from-success-600 hover:to-success-700 shadow-button hover:shadow-button-hover focus:ring-success-500',
-    warning: 'bg-gradient-to-r from-warning-500 to-warning-600 text-white hover:from-warning-600 hover:to-warning-700 shadow-button hover:shadow-button-hover focus:ring-warning-500',
-    danger: 'bg-gradient-to-r from-error-500 to-error-600 text-white hover:from-error-600 hover:to-error-700 shadow-button hover:shadow-button-hover focus:ring-error-500',
-    ghost: 'bg-transparent text-secondary-600 hover:bg-secondary-100 hover:text-secondary-900 focus:ring-secondary-500',
+    primary: 'btn-primary shadow-button hover:shadow-button-hover focus:ring-primary-500',
+    secondary: 'btn-secondary shadow-card hover:shadow-card-hover focus:ring-secondary-500',
+    success: 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-button hover:shadow-button-hover focus:ring-green-500',
+    warning: 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700 shadow-button hover:shadow-button-hover focus:ring-amber-500',
+    danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 shadow-button hover:shadow-button-hover focus:ring-red-500',
+    ghost: 'bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:ring-gray-500',
     outline: 'border-2 border-primary-500 text-primary-600 hover:bg-primary-50 focus:ring-primary-500',
-    glass: 'bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 shadow-glass focus:ring-white/50',
-    gradient: 'bg-gradient-to-r from-primary-500 via-primary-600 to-accent-500 text-white hover:from-primary-600 hover:via-primary-700 hover:to-accent-600 shadow-button hover:shadow-button-hover focus:ring-primary-500 bg-size-300 bg-pos-0 hover:bg-pos-100 transition-all duration-500',
+    glass: 'btn-glass shadow-glass focus:ring-white/50',
+    gradient: 'btn-primary shadow-button hover:shadow-button-hover focus:ring-primary-500 bg-size-300 bg-pos-0 hover:bg-pos-100 transition-all duration-500',
   };
 
   const sizes = {
