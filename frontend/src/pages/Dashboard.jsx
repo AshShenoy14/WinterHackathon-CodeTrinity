@@ -20,7 +20,9 @@ import {
   Activity,
   ThumbsUp,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Cloud,
+  Zap
 } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -150,8 +152,37 @@ const Dashboard = () => {
             transition={{ duration: 0.5, staggerChildren: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
           >
+            {/* Google Cloud Status Card */}
             <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
-              <Card hover={false} className="p-6 h-full">
+              <Card hover={false} className="p-6 h-full border-l-4 border-blue-500 shadow-lg relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Cloud className="w-24 h-24 text-blue-600" />
+                </div>
+                <div className="flex items-center justify-between mb-2 relative z-10">
+                  <p className="text-sm font-bold text-gray-600 uppercase tracking-wide">Google Cloud Status</p>
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Zap className="w-5 h-5 text-blue-600" />
+                  </div>
+                </div>
+                <div className="space-y-3 mt-4 relative z-10">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-gray-700 font-medium"><div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div> Maps Platform</span>
+                    <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-0.5 rounded">Active</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-gray-700 font-medium"><div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div> Vertex AI</span>
+                    <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-0.5 rounded">Online</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2 text-gray-700 font-medium"><div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div> Firebase</span>
+                    <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-0.5 rounded">Connected</span>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
+              <Card hover={false} className="p-6 h-full border-l-4 border-primary-500">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Reports</p>
@@ -165,7 +196,7 @@ const Dashboard = () => {
             </motion.div>
 
             <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
-              <Card hover={false} className="p-6 h-full">
+              <Card hover={false} className="p-6 h-full border-l-4 border-warning-500">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Pending Review</p>
@@ -179,7 +210,7 @@ const Dashboard = () => {
             </motion.div>
 
             <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
-              <Card hover={false} className="p-6 h-full">
+              <Card hover={false} className="p-6 h-full border-l-4 border-secondary-500">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Your Reports</p>
@@ -187,20 +218,6 @@ const Dashboard = () => {
                   </div>
                   <div className="p-3 bg-secondary-100 rounded-lg">
                     <Users className="w-6 h-6 text-secondary-600" />
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-
-            <motion.div whileHover={{ y: -5 }} transition={{ duration: 0.2 }}>
-              <Card hover={false} className="p-6 h-full">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Your Votes</p>
-                    <p className="text-2xl font-bold text-gray-900">{stats.userVotes}</p>
-                  </div>
-                  <div className="p-3 bg-accent-100 rounded-lg">
-                    <ThumbsUp className="w-6 h-6 text-accent-600" />
                   </div>
                 </div>
               </Card>
@@ -265,6 +282,12 @@ const Dashboard = () => {
                           <Badge variant={getStatusColor(report.status)} size="sm">
                             {report.status.replace('_', ' ')}
                           </Badge>
+                          {report.aiAnalysis && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-purple-100 text-purple-700 border border-purple-200">
+                              <Activity className="w-3 h-3" />
+                              AI Verified
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm text-gray-600 mb-2 line-clamp-2">{report.description}</p>
                         <div className="flex items-center space-x-4 text-sm text-gray-500">

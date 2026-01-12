@@ -14,6 +14,13 @@ exports.createReport = onRequest({
   cors: true,
 }, async (req, res) => {
   try {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      // res.set('Access-Control-Allow-Origin', '*'); // Handled by cors:true mostly, but good for safety
+      return res.status(204).send('');
+    }
+
     if (req.method !== 'POST') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
@@ -138,6 +145,12 @@ exports.getReports = onRequest({
   cors: true,
 }, async (req, res) => {
   try {
+    if (req.method === 'OPTIONS') {
+      res.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      return res.status(204).send('');
+    }
+
     if (req.method !== 'GET') {
       return res.status(405).json({ error: 'Method not allowed' });
     }
