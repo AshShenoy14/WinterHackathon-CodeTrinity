@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow, useMap } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, AdvancedMarker, Pin, InfoWindow, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { MarkerClusterer } from '@googlemaps/markerclusterer';
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 
 const HeatmapLayer = ({ points }) => {
   const map = useMap();
+  const visualization = useMapsLibrary('visualization');
+
   useEffect(() => {
-    if (!map || !points || !window.google) return;
+    if (!map || !visualization || !points) return;
 
     // Convert points to WeightedLocation format
     const heatmapData = points.map(p => ({
@@ -15,7 +17,7 @@ const HeatmapLayer = ({ points }) => {
       weight: p.score || 1
     }));
 
-    const heatmap = new window.google.maps.visualization.HeatmapLayer({
+    const heatmap = new visualization.HeatmapLayer({
       data: heatmapData,
       radius: 40,
       opacity: 0.8,
@@ -42,7 +44,7 @@ const HeatmapLayer = ({ points }) => {
     return () => {
       heatmap.setMap(null);
     };
-  }, [map, points]);
+  }, [map, visualization, points]);
 
   return null;
 };
@@ -104,7 +106,7 @@ const MapView = ({ reports = [], predictions = [], interventions = [] }) => {
                   <p className="text-xs text-gray-600 mb-2">{selectedReport.location?.address}</p>
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${selectedReport.status === 'resolved' ? 'bg-green-100 text-green-700' :
-                        selectedReport.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
+                      selectedReport.status === 'in_progress' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
                       }`}>
                       {selectedReport.status}
                     </span>
