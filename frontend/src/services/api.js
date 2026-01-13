@@ -281,6 +281,49 @@ class ApiClient {
       return { success: false };
     }
 
+    if (endpoint.includes('partners-getAll')) {
+      return {
+        partners: [
+          {
+            id: 'p-1',
+            name: 'Green Earth Foundation',
+            type: 'NGO',
+            contribution: 'Reforestation Expertise',
+            projectsSupported: 12,
+            totalContribution: '$50,000',
+            contact: 'contact@greenearth.org'
+          },
+          {
+            id: 'p-2',
+            name: 'TechCorp CSR',
+            type: 'CSR',
+            contribution: 'Smart Sensors & Funding',
+            projectsSupported: 5,
+            totalContribution: '$120,000',
+            contact: 'csr@techcorp.com'
+          },
+          {
+            id: 'p-3',
+            name: 'City Municipal Council',
+            type: 'Government',
+            contribution: 'Land Approval & Maintenance',
+            projectsSupported: 25,
+            totalContribution: 'Infrastructure',
+            contact: 'admin@citycouncil.gov'
+          },
+          {
+            id: 'p-4',
+            name: 'EcoSolutions Ltd',
+            type: 'Corporate',
+            contribution: 'Sustainable Materials',
+            projectsSupported: 8,
+            totalContribution: '$35,000',
+            contact: 'info@ecosolutions.com'
+          }
+        ]
+      };
+    }
+
     return {};
   }
 
