@@ -84,11 +84,11 @@ firebase emulators:start
 
 👥 Team Members – CodeTrinity
 
-Akshatha – 4SO23CS011
+Akshatha – 4SO23CS011 (Backend-Gemini)
 
-Alisha A Pinto – 4SO23CS016
+Alisha A Pinto – 4SO23CS016 (Backend-Firebase auth)
 
-Ashwini Shenoy B – 4SO23CS042
+Ashwini Shenoy B – 4SO23CS042 (Frontend)
 
 📧 Team Leader Email: 23a36.ashwini@sjec.ac.in
 
