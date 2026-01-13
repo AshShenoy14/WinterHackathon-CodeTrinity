@@ -10,16 +10,49 @@ body {
   color: #374151;
   /* Premium Mesh Gradient Background */
   background-color: #f0fdf4;
-  background-image: 
+  background-image:
     radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.15) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(5, 150, 105, 0.1) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(52, 211, 153, 0.1) 0px, transparent 50%),
     radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
   background-attachment: fixed;
   font-family: 'Outfit', 'Inter', 'Poppins', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  background-attachment: fixed;
+}
+
+/* Hide Google Translate Banner */
+body {
+  top: 0 !important;
+}
+
+.goog-te-banner-frame {
+  display: none !important;
+}
+
+.goog-tooltip {
+  display: none !important;
+}
+
+.goog-te-gadget-simple {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.goog-te-gadget-icon {
+  display: none !important;
+}
+
+/* Style the dropdown text */
+.goog-te-menu-value span {
+  color: #4b5563 !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+.goog-te-menu-value span:hover {
+  color: #16a34a !important;
 }
 
 h1,

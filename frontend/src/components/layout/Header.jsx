@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, User, ChevronDown, MapPin, BarChart3, Users, Handshake, TrendingUp, Globe, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useLanguage } from '../../context/LanguageContext';
 import Button from '../ui/Button';
 import Container from './Container';
 
@@ -11,8 +10,7 @@ const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { language, setLanguage } = useLanguage();
-
+  /* Restoring Nav Links and Helpers due to accidental deletion */
   const navLinks = [
     { name: 'Home', path: '/', icon: null },
     { name: 'Dashboard', path: '/dashboard', icon: BarChart3 },
@@ -24,21 +22,21 @@ const Header = () => {
     { name: 'Guide', path: '/guide', icon: BookOpen },
   ];
 
-  // ... (keep isActive and handleSignOut)
+  const isActive = (path) => {
+    return location.pathname === path ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-700 hover:text-green-600';
+  };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      setIsProfileOpen(false);
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
+  // Google Translate Element
   const LanguageSelector = () => (
-    <div className="flex items-center space-x-1 border rounded-lg px-2 py-1 bg-gray-50">
-      <Globe className="w-3 h-3 text-gray-500" />
-      <select
-        value={language}
-        onChange={(e) => setLanguage(e.target.value)}
-        className="bg-transparent text-xs font-medium text-gray-700 outline-none cursor-pointer"
-      >
-        <option value="en">EN</option>
-        <option value="es">ES</option>
-        <option value="hi">HI</option>
-      </select>
-    </div>
+    <div id="google_translate_element" className="google-translate-container"></div>
   );
 
   return (

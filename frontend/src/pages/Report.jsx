@@ -289,20 +289,41 @@ const Report = () => {
                 {!analysis ? (
                   <Button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
+                      if (!image) {
+                        toast.error("Please upload an image first for AI analysis.");
+                        return;
+                      }
+
                       setIsAnalyzing(true);
-                      // Simulate API delay
-                      setTimeout(() => {
+                      try {
+                        // Convert image to Base64
+                        const reader = new FileReader();
+                        reader.readAsDataURL(image);
+                        reader.onloadend = async () => {
+                          const base64data = reader.result.split(',')[1];
+
+                          try {
+                            const result = await aiAPI.analyze(reportType, base64data);
+                            setAnalysis(result);
+                            toast.success("Gemini analysis complete!", { icon: '✨' });
+                          } catch (err) {
+                            console.error("AI Analysis failed:", err);
+                            toast.error("AI Analysis failed. Using offline simulation.");
+                            // Fallback (Optional, but good for hackathon safety)
+                            setAnalysis({
+                              recommendation: "Native Species (Offline)",
+                              benefits: "Could not connect to AI, but planting is encouraged.",
+                              plantingSeason: "Check local guides"
+                            });
+                          } finally {
+                            setIsAnalyzing(false);
+                          }
+                        };
+                      } catch (error) {
+                        console.error("Image processing error:", error);
                         setIsAnalyzing(false);
-                        setAnalysis({
-                          recommendation: reportType === 'tree_loss'
-                            ? "Neem (Azadirachta indica) & Peepal"
-                            : "Bamboo & Lemongrass (Fast growth)",
-                          benefits: "Drought resistant, High CO2 absorption",
-                          plantingSeason: "Monsoon (June - August)"
-                        });
-                        toast.success("Gemini analysis complete!");
-                      }, 1500);
+                      }
                     }}
                     variant="secondary"
                     className="bg-white hover:bg-white/80 text-indigo-600 border-indigo-200"

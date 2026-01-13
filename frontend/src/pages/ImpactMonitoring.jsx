@@ -102,15 +102,48 @@ const ImpactMonitoring = () => {
   };
 
   const prepareRegionalData = (reportsData) => {
-    // Basic hardcoded simulation for now, could be dynamic based on 'zone' in report
-    const regions = [
-      { name: 'North Zone', projects: 12, trees: 180, heatReduction: 9.6, color: '#10b981' },
-      { name: 'South Zone', projects: 8, trees: 120, heatReduction: 6.4, color: '#3b82f6' },
-      { name: 'East Zone', projects: 15, trees: 225, heatReduction: 12.0, color: '#f59e0b' },
-      { name: 'West Zone', projects: 10, trees: 150, heatReduction: 8.0, color: '#ef4444' },
-      { name: 'Central Zone', projects: 18, trees: 270, heatReduction: 14.4, color: '#8b5cf6' }
-    ];
-    setRegionalData(regions);
+    // Dynamic Zone Calculation based on Bangalore Center (approx 12.97, 77.59)
+    const centerLat = 12.97;
+    const centerLng = 77.59;
+
+    const zones = {
+      'North Zone': { count: 0, color: '#10b981' },
+      'South Zone': { count: 0, color: '#3b82f6' },
+      'East Zone': { count: 0, color: '#f59e0b' },
+      'West Zone': { count: 0, color: '#ef4444' },
+      'Central Zone': { count: 0, color: '#8b5cf6' }
+    };
+
+    reportsData.forEach(r => {
+      if (r.location && r.location.lat && r.location.lng) {
+        if (Math.abs(r.location.lat - centerLat) < 0.02 && Math.abs(r.location.lng - centerLng) < 0.02) {
+          zones['Central Zone'].count++;
+        } else if (r.location.lat > centerLat) {
+          zones['North Zone'].count++;
+        } else if (r.location.lat < centerLat) {
+          zones['South Zone'].count++;
+        } else if (r.location.lng > centerLng) {
+          zones['East Zone'].count++;
+        } else {
+          zones['West Zone'].count++;
+        }
+      }
+    });
+
+    const dynamicRegions = Object.keys(zones).map(name => ({
+      name,
+      projects: zones[name].count,
+      trees: zones[name].count * 15,
+      heatReduction: zones[name].count * 0.5,
+      color: zones[name].color
+    })).filter(z => z.projects > 0); // Only show active zones
+
+    // If no data, show empty state or defaults
+    if (dynamicRegions.length === 0) {
+      dynamicRegions.push({ name: 'No Data', projects: 0, trees: 0, heatReduction: 0, color: '#ccc' });
+    }
+
+    setRegionalData(dynamicRegions);
   };
 
   useEffect(() => {
