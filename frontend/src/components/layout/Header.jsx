@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, ChevronDown, MapPin, BarChart3, Users, Handshake, TrendingUp } from 'lucide-react';
+import { Menu, X, User, ChevronDown, MapPin, BarChart3, Users, Handshake, TrendingUp, Globe, BookOpen } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Button from '../ui/Button';
 import Container from './Container';
 
@@ -10,6 +11,7 @@ const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { language, setLanguage } = useLanguage();
 
   const navLinks = [
     { name: 'Home', path: '/', icon: null },
@@ -19,20 +21,25 @@ const Header = () => {
     { name: 'Community Voting', path: '/voting', icon: Users },
     { name: 'Collaboration', path: '/collaboration', icon: Handshake },
     { name: 'Impact', path: '/impact', icon: TrendingUp },
+    { name: 'Guide', path: '/guide', icon: BookOpen },
   ];
 
-  const isActive = (path) => {
-    return location.pathname === path ? 'text-green-600 border-b-2 border-green-600' : 'text-gray-700 hover:text-green-600';
-  };
+  // ... (keep isActive and handleSignOut)
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      setIsProfileOpen(false);
-    } catch (error) {
-      console.error('Sign out error:', error);
-    }
-  };
+  const LanguageSelector = () => (
+    <div className="flex items-center space-x-1 border rounded-lg px-2 py-1 bg-gray-50">
+      <Globe className="w-3 h-3 text-gray-500" />
+      <select
+        value={language}
+        onChange={(e) => setLanguage(e.target.value)}
+        className="bg-transparent text-xs font-medium text-gray-700 outline-none cursor-pointer"
+      >
+        <option value="en">EN</option>
+        <option value="es">ES</option>
+        <option value="hi">HI</option>
+      </select>
+    </div>
+  );
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -67,6 +74,7 @@ const Header = () => {
 
           {/* User Actions */}
           <div className="hidden lg:flex items-center space-x-4">
+            <LanguageSelector />
             {user ? (
               <div className="relative">
                 <button
@@ -142,7 +150,7 @@ const Header = () => {
               </Link>
             );
           })}
-          
+
           <div className="border-t border-gray-200 pt-4 mt-4">
             {user ? (
               <>

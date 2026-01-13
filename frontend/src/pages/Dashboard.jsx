@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { reportsAPI, votingAPI } from '../services/api';
+import toast from 'react-hot-toast';
 import {
   BarChart,
   Bar,
@@ -429,6 +430,20 @@ const Dashboard = () => {
                               }}
                             >
                               Approve
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Guardian Feature (New) */}
+                        {report.status === 'approved' && (
+                          <div className="mt-2 pt-2 border-t border-gray-100">
+                            <Button
+                              size="xs"
+                              variant="outline"
+                              className="w-full border-dashed border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                              onClick={() => toast.success("You are now a Guardian! 🌱 We'll send watering reminders.", { icon: '🛡️' })}
+                            >
+                              <Users className="w-3 h-3 mr-1" /> Join as Guardian
                             </Button>
                           </div>
                         )}

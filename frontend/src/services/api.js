@@ -1,3 +1,5 @@
+import { analyzeImageWithGemini } from './gemini';
+
 // API configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://us-central1-greenpulse.cloudfunctions.net';
 
@@ -218,6 +220,29 @@ class ApiClient {
       localStorage.setItem('greenpulse_user_profile', JSON.stringify(newProfile));
       return newProfile;
     }
+    if (endpoint.includes('ai-analyze')) {
+      const body = JSON.parse(options.body || '{}');
+
+      // Try Real Gemini Analysis if Base64 image is present
+      if (body.imageBase64 || body.imageUrl?.startsWith('data:')) {
+        try {
+          const base64 = body.imageBase64 || body.imageUrl;
+          const result = await analyzeImageWithGemini(base64, 'image/jpeg', body.reportType);
+          return result;
+        } catch (e) {
+          console.error("Gemini Real Analysis failed, falling back to mock", e);
+        }
+      }
+
+      // Fallback Mock
+      return {
+        riskLevel: 'Medium',
+        recommendation: 'Based on the mock analysis, we recommend planting more trees.',
+        environmentalImpact: 'Moderate positive impact.',
+        confidence: 0.85
+      };
+    }
+
     if (endpoint.includes('ai-getAnalysis')) {
       return {
         riskLevel: 'Medium',
