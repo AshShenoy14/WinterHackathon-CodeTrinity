@@ -16,6 +16,7 @@ import PageNotFound from './pages/PageNotFound';
 import IntroVideo from './components/IntroVideo';
 import ARView from './pages/ARView';
 import Leaderboard from './pages/Leaderboard';
+import ReviewReports from './pages/ReviewReports';
 
 function App() {
   const [showIntro, setShowIntro] = useState(true);
@@ -41,6 +42,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/ar-view" element={<ARView />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
+            <Route path="/review" element={<ReviewReports />} />
             <Route path="*" element={<PageNotFound />} />
           </Routes>
         </Layout>

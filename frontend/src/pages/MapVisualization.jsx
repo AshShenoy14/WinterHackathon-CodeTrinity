@@ -6,6 +6,7 @@ const MapVisualization = () => {
   const [reports, setReports] = useState([]);
   const [predictions, setPredictions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState('all');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -17,7 +18,6 @@ const MapVisualization = () => {
         setReports(reportsData);
 
         // Calculate Heat Zones / Predictions data from 'heat_hotspot' reports
-        // MapView expects points with { lat, lng, score } for HeatmapLayer
         const heatPoints = reportsData
           .filter(r => r.reportType === 'heat_hotspot')
           .map(r => ({
@@ -37,6 +37,10 @@ const MapVisualization = () => {
     fetchData();
   }, []);
 
+  const filteredReports = activeFilter === 'all'
+    ? reports
+    : reports.filter(r => r.reportType === activeFilter);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
@@ -52,16 +56,38 @@ const MapVisualization = () => {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
       <div className="bg-white shadow-sm border-b z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-800">GreenPulse Map Visualization</h1>
-          <p className="text-gray-600">Interactive map showing heat zones and citizen reports</p>
+        <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">GreenPulse Earth View</h1>
+            <p className="text-gray-600 text-sm">Powered by Google Maps & "Earth Engine" Analytics</p>
+          </div>
+
+          <div className="flex bg-gray-100 p-1 rounded-lg">
+            {[
+              { id: 'all', label: 'All Layers' },
+              { id: 'heat_hotspot', label: '🔥 Heat' },
+              { id: 'tree_loss', label: '🌳 Reforestation' },
+              { id: 'unused_space', label: '🏚️ Land' },
+            ].map(filter => (
+              <button
+                key={filter.id}
+                onClick={() => setActiveFilter(filter.id)}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-all ${activeFilter === filter.id
+                    ? 'bg-white text-green-700 shadow-sm'
+                    : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                {filter.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Map Container */}
-      <div className="flex-grow relative">
+      <div className="flex-grow relative h-[calc(100vh-140px)]">
         <MapView
-          reports={reports}
+          reports={filteredReports}
           predictions={predictions}
         />
       </div>

@@ -2,66 +2,84 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://us-central1-greenpulse.cloudfunctions.net';
 
 // Mock Data for Demo/Fallback - Mutable for session persistence
-const MOCK_DATA = {
-  reports: [
-    {
-      id: 'mock-1',
-      title: 'Heat Island in Downtown',
-      description: 'Severe heat accumulation in this concrete area.',
-      location: { lat: 12.9716, lng: 77.5946, address: 'MG Road, Bangalore' },
-      reportType: 'heat_hotspot',
-      status: 'pending',
-      upvotes: 15,
-      downvotes: 1,
-      createdAt: new Date().toISOString(),
-      aiAnalysis: {
-        riskLevel: 'High',
-        recommendation: 'Plant urban canopy',
-        environmentalImpact: 'Significant reduction in local temp expected'
-      },
-      imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=600&auto=format&fit=crop'
-    },
-    {
-      id: 'mock-2',
-      title: 'Deforested Park Zone',
-      description: 'Several trees cut down illegally.',
-      location: { lat: 12.9352, lng: 77.6245, address: 'Koramangala, Bangalore' },
-      reportType: 'tree_loss',
-      status: 'approved',
-      upvotes: 42,
-      downvotes: 0,
-      createdAt: new Date().toISOString(),
-      aiAnalysis: {
-        riskLevel: 'Critical',
-        recommendation: 'Immediate reforestation',
-        environmentalImpact: 'Loss of biodiversity'
-      },
-      imageUrl: 'https://images.unsplash.com/photo-1623577772765-a89c773b063d?q=80&w=600&auto=format&fit=crop'
-    },
-    {
-      id: 'mock-3',
-      title: 'Empty Plot for Garden',
-      description: 'Unused space that could be a community garden.',
-      location: { lat: 12.9250, lng: 77.5891, address: 'Jayanagar, Bangalore' },
-      reportType: 'unused_space',
-      status: 'under_review',
-      upvotes: 8,
-      downvotes: 0,
-      createdAt: new Date().toISOString(),
-      aiAnalysis: {
-        riskLevel: 'Low',
-        recommendation: 'Community gardening',
-        environmentalImpact: 'Positive social and environmental impact'
-      },
-      imageUrl: 'https://plus.unsplash.com/premium_photo-1664303499312-917c50e4047b?q=80&w=600&auto=format&fit=crop'
-    }
-  ],
-  stats: {
-    totalReports: 150,
-    resolvedReports: 89,
-    treesPlanted: 450,
-    activeHotspots: 12
+const getStoredData = () => {
+  const stored = localStorage.getItem('greenpulse_mock_data');
+  if (stored) {
+    return JSON.parse(stored);
   }
+  return {
+    reports: [
+      {
+        id: 'mock-1',
+        title: 'Heat Island in Downtown',
+        description: 'Severe heat accumulation in this concrete area.',
+        location: { lat: 12.9716, lng: 77.5946, address: 'MG Road, Bangalore' },
+        reportType: 'heat_hotspot',
+        status: 'pending',
+        upvotes: 15,
+        downvotes: 1,
+        createdAt: new Date().toISOString(),
+        aiAnalysis: {
+          riskLevel: 'High',
+          recommendation: 'Plant urban canopy',
+          environmentalImpact: 'Significant reduction in local temp expected',
+          estimated_carbon_offset: '120 kg/year'
+        },
+        imageUrl: 'https://images.unsplash.com/photo-1550989460-0adf9ea622e2?q=80&w=600&auto=format&fit=crop',
+        userEmail: 'citizen@greenpulse.app'
+      },
+      {
+        id: 'mock-2',
+        title: 'Deforested Park Zone',
+        description: 'Several trees cut down illegally.',
+        location: { lat: 12.9352, lng: 77.6245, address: 'Koramangala, Bangalore' },
+        reportType: 'tree_loss',
+        status: 'approved',
+        upvotes: 42,
+        downvotes: 0,
+        createdAt: new Date().toISOString(),
+        aiAnalysis: {
+          riskLevel: 'Critical',
+          recommendation: 'Immediate reforestation',
+          environmentalImpact: 'Loss of biodiversity',
+          estimated_carbon_offset: '450 kg/year'
+        },
+        imageUrl: 'https://images.unsplash.com/photo-1623577772765-a89c773b063d?q=80&w=600&auto=format&fit=crop',
+        userEmail: 'nature_lover@greenpulse.app'
+      },
+      {
+        id: 'mock-3',
+        title: 'Empty Plot for Garden',
+        description: 'Unused space that could be a community garden.',
+        location: { lat: 12.9250, lng: 77.5891, address: 'Jayanagar, Bangalore' },
+        reportType: 'unused_space',
+        status: 'under_review',
+        upvotes: 8,
+        downvotes: 0,
+        createdAt: new Date().toISOString(),
+        aiAnalysis: {
+          riskLevel: 'Low',
+          recommendation: 'Community gardening',
+          environmentalImpact: 'Positive social and environmental impact',
+          estimated_carbon_offset: '200 kg/year'
+        },
+        imageUrl: 'https://plus.unsplash.com/premium_photo-1664303499312-917c50e4047b?q=80&w=600&auto=format&fit=crop',
+        userEmail: 'urban_farmer@greenpulse.app'
+      }
+    ],
+    stats: {
+      totalReports: 150,
+      resolvedReports: 89,
+      treesPlanted: 450,
+      activeHotspots: 12
+    }
+  };
+};
+
+const MOCK_DATA = getStoredData();
+
+const saveMockData = () => {
+  localStorage.setItem('greenpulse_mock_data', JSON.stringify(MOCK_DATA));
 };
 
 // Generic API client
@@ -152,6 +170,8 @@ class ApiClient {
       }, 2000);
 
       MOCK_DATA.reports.unshift(newReport); // Add to beginning
+      console.log('MOCK: Created new report', newReport);
+      saveMockData();
       return newReport;
     }
 
@@ -164,6 +184,40 @@ class ApiClient {
         user: { uid: 'mock-user', email: 'user@example.com', role: 'citizen', fullName: 'Mock User' }
       };
     }
+
+
+    if (endpoint.includes('users-getProfile')) {
+      const userReports = MOCK_DATA.reports.filter(r => r.userEmail === 'citizen@greenpulse.app'); // Simulating current user
+      const points = userReports.reduce((acc, r) => acc + (r.upvotes * 10) + 50, 0); // 50pts per report + 10 per upvote
+
+      const storedUser = localStorage.getItem('greenpulse_user_profile');
+      const userProfile = storedUser ? JSON.parse(storedUser) : {
+        name: "Eco Guardian",
+        email: "citizen@greenpulse.app",
+        memberSince: "Dec 2025",
+        location: "Downtown"
+      };
+
+      return {
+        ...userProfile,
+        reportsSubmitted: userReports.length,
+        points: points
+      };
+    }
+
+    if (endpoint.includes('users-updateProfile')) {
+      const body = JSON.parse(options.body || '{}');
+      const storedUser = localStorage.getItem('greenpulse_user_profile');
+      const currentProfile = storedUser ? JSON.parse(storedUser) : {
+        name: "Eco Guardian",
+        email: "citizen@greenpulse.app",
+        memberSince: "Dec 2025",
+        location: "Downtown"
+      };
+      const newProfile = { ...currentProfile, ...body };
+      localStorage.setItem('greenpulse_user_profile', JSON.stringify(newProfile));
+      return newProfile;
+    }
     if (endpoint.includes('ai-getAnalysis')) {
       return {
         riskLevel: 'Medium',
@@ -171,6 +225,37 @@ class ApiClient {
         environmentalImpact: 'Moderate positive impact.'
       };
     }
+
+
+    if (endpoint.includes('reports-updateStatus')) {
+      const reportId = new URLSearchParams(endpoint.split('?')[1]).get('reportId');
+      const body = JSON.parse(options.body || '{}');
+      const reportIndex = MOCK_DATA.reports.findIndex(r => r.id === reportId);
+
+      if (reportIndex !== -1) {
+        MOCK_DATA.reports[reportIndex] = { ...MOCK_DATA.reports[reportIndex], ...body };
+        saveMockData();
+        return MOCK_DATA.reports[reportIndex];
+      }
+      return {};
+    }
+
+    if (endpoint.includes('reports-vote')) {
+      const body = JSON.parse(options.body || '{}');
+      const { reportId, voteType } = body;
+      const reportIndex = MOCK_DATA.reports.findIndex(r => r.id === reportId);
+
+      if (reportIndex !== -1) {
+        // Basic simulation: just increment upvotes for now
+        if (voteType === 'upvote') {
+          MOCK_DATA.reports[reportIndex].upvotes = (MOCK_DATA.reports[reportIndex].upvotes || 0) + 1;
+        }
+        saveMockData();
+        return { success: true, upvotes: MOCK_DATA.reports[reportIndex].upvotes };
+      }
+      return { success: false };
+    }
+
     return {};
   }
 
