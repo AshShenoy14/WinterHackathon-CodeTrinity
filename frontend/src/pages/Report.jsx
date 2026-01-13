@@ -319,10 +319,20 @@ const Report = () => {
                           const base64data = reader.result.split(',')[1];
 
                           try {
-                            const result = await aiAPI.analyze(reportType, base64data);
+                            const result = await aiAPI.analyze({
+                              reportType,
+                              imageBase64: base64data
+                            });
 
-                            if (result.isRelevant === false) {
-                              toast.error(`Image Flagged: ${result.spamReason || 'Irrelevant content detected'}`);
+                            // Stricter Check: Must be explicitly true, or we assume failure if it's missing (unless legacy mock)
+                            if (result.isRelevant !== true && result.typeConfirmed !== true) {
+                              // If it's missing, it might be the legacy mock which I updated to have isRelevant: true.
+                              // But if it's the "Analysis Connection Failed" block, isRelevant is false.
+                              if (result.isRelevant === false) {
+                                toast.error(result.spamReason || 'Image irrelevant or analysis failed');
+                                setAnalysis(null); // Clear previous analysis
+                                return;
+                              }
                               // Do not set analysis result to prevent using irrelevant data
                               // Or we can save it to show "Rejected" state UI.
                               setAnalysis({ ...result, rejected: true });
@@ -350,7 +360,6 @@ const Report = () => {
                         setIsAnalyzing(false);
                       }
                     }}
-                    variant="secondary"
                     className="bg-white hover:bg-white/80 text-indigo-600 border-indigo-200"
                     isLoading={isAnalyzing}
                   >

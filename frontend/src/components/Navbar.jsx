@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Leaf, Menu, User } from 'lucide-react';
+import { Leaf, Menu, User, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const { language, setLanguage } = useLanguage();
   const location = useLocation();
 
   const navLinks = [
@@ -59,6 +61,18 @@ export default function Navbar() {
             >
               <User className="w-5 h-5 text-gray-600" />
             </Link>
+
+            {/* Language Switcher */}
+            <button
+              onClick={() => {
+                const langs = ['en', 'es', 'hi'];
+                const nextIndex = (langs.indexOf(language) + 1) % langs.length;
+                setLanguage(langs[nextIndex]);
+              }}
+              className="px-3 py-1 rounded-full border border-gray-200 text-sm font-medium hover:bg-gray-50 transition-colors uppercase"
+            >
+              {language}
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -75,6 +89,22 @@ export default function Navbar() {
         {isMenuOpen && (
           <div className="md:hidden py-4 border-t border-gray-100 animate-fade-in bg-white/95 backdrop-blur-xl rounded-b-2xl shadow-xl absolute left-0 right-0 px-4">
             <div className="flex flex-col gap-2">
+              {/* Mobile Language Switcher */}
+              <div className="flex items-center gap-2 px-4 py-2">
+                <Globe className="w-5 h-5 text-gray-500" />
+                <div className="flex gap-2">
+                  {['en', 'es', 'hi'].map((lang) => (
+                    <button
+                      key={lang}
+                      onClick={() => setLanguage(lang)}
+                      className={`px-2 py-1 rounded text-xs font-bold uppercase ${language === lang ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-600'}`}
+                    >
+                      {lang}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {navLinks.map((link) => (
                 <Link
                   key={link.to}

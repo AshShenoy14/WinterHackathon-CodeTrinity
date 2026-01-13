@@ -258,7 +258,7 @@ const Home = () => {
               </p>
             </div>
 
-            <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 overflow-hidden border border-gray-100 transform hover:scale-[1.01] transition-transform duration-500">
+            <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 overflow-hidden border border-gray-100 transform hover:scale-[1.01] transition-transform duration-500 h-[600px] w-full">
               <MapView reports={filteredReports} />
             </div>
 
@@ -276,7 +276,7 @@ const Home = () => {
                       <h4 className="font-bold text-gray-800">{report.title}</h4>
                       <p className="text-sm text-gray-500 mb-2 truncate">{report.location?.address}</p>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          report.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        report.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
                         }`}>
                         {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
                       </span>

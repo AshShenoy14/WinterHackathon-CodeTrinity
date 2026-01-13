@@ -23,11 +23,11 @@ export const analyzeImageWithGemini = async (imageBase64, mimeType = "image/jpeg
         
         CRITICAL: DETERMINE RELEVANCE FIRST.
         If the image is:
-        - Indoor environment (room, office, home)
-        - A screenshot, meme, or computer generated text
-        - A selfie or portrait of a person
+        - Indoor environment (room, office, home, wall, floor)
+        - A screenshot, document, meme, or text
+        - A selfie, person, or body part
+        - A generic object (computer, cup, car, etc.) without environmental context
         - Completely blurry or dark
-        - Only a single object like a keyboard, mouse, cup, etc.
         ...then it is IRRELEVANT. Return "isRelevant": false.
 
         Only if it is a VALID outdoor, nature, city street, or environmental scene:
@@ -66,6 +66,12 @@ export const analyzeImageWithGemini = async (imageBase64, mimeType = "image/jpeg
 
     } catch (error) {
         console.error("Gemini Analysis Failed:", error);
-        throw error;
+        // Return a safe object that indicates failure rather than throwing, 
+        // allowing the caller to handle the "spamReason".
+        return {
+            isRelevant: false,
+            spamReason: "AI Service Error: " + error.message,
+            recommendation: "Error"
+        };
     }
 };

@@ -47,6 +47,7 @@ const IntroVideo = ({ onComplete }) => {
                 onTimeUpdate={handleTimeUpdate}
                 muted={isMuted}
                 playsInline
+                autoPlay
             >
                 <source src="/Video_Generation_With_Music_And_Laos.mp4" type="video/mp4" />
                 Your browser does not support the video tag.

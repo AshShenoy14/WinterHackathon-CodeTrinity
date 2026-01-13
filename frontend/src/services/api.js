@@ -126,11 +126,11 @@ class ApiClient {
 
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // console.error('API request failed:', error); // Suppressed for Demo Mode
 
       // Fallback to Mock Data (Alternative)
       if (this.useMock) {
-        console.warn('Falling back to MOCK DATA for:', endpoint);
+        console.log('Info: Using Offline Demo Data for:', endpoint);
         return await this.getMockResponse(endpoint, options);
       }
 
@@ -230,15 +230,23 @@ class ApiClient {
           const result = await analyzeImageWithGemini(base64, 'image/jpeg', body.reportType);
           return result;
         } catch (e) {
-          console.error("Gemini Real Analysis failed, falling back to mock", e);
+          console.error("Gemini Real Analysis failed:", e);
+          return {
+            isRelevant: false,
+            spamReason: "AI Analysis Connection Failed. Please check your API Key or Network.",
+            riskLevel: 'Unknown',
+            recommendation: 'Analysis Unavailable',
+          };
         }
       }
 
-      // Fallback Mock
+      // Fallback Mock for calls without image data
       return {
+        isRelevant: true, // Legacy mock behavior
+        typeConfirmed: true,
         riskLevel: 'Medium',
-        recommendation: 'Based on the mock analysis, we recommend planting more trees.',
-        environmentalImpact: 'Moderate positive impact.',
+        recommendation: 'Mock: Native Tree Planting (Demo)',
+        environmentalImpact: 'Simulated positive impact.',
         confidence: 0.85
       };
     }
