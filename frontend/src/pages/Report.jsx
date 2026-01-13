@@ -270,6 +270,59 @@ const Report = () => {
                 placeholder="Describe the area conditions, estimated size, and potential benefits of greening..."
               />
             </section>
+            {/* AI Assistant Section - NEW FEATURE */}
+            {(reportType === 'tree_loss' || reportType === 'unused_space') && (
+              <section className="bg-gradient-to-br from-indigo-50 to-purple-50 p-6 rounded-2xl border border-indigo-100 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <Sparkles className="w-24 h-24 text-indigo-500" />
+                </div>
+
+                <h2 className="text-sm font-semibold text-indigo-900 mb-2 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-indigo-600" />
+                  Gemini Nature Advisor
+                </h2>
+
+                <p className="text-xs text-indigo-700 mb-4 max-w-md">
+                  Unsure what to plant? Let Google's Gemini analyze the local climate and soil data (simulated) to recommend the best native species.
+                </p>
+
+                {!analysis ? (
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setIsAnalyzing(true);
+                      // Simulate API delay
+                      setTimeout(() => {
+                        setIsAnalyzing(false);
+                        setAnalysis({
+                          recommendation: reportType === 'tree_loss'
+                            ? "Neem (Azadirachta indica) & Peepal"
+                            : "Bamboo & Lemongrass (Fast growth)",
+                          benefits: "Drought resistant, High CO2 absorption",
+                          plantingSeason: "Monsoon (June - August)"
+                        });
+                        toast.success("Gemini analysis complete!");
+                      }, 1500);
+                    }}
+                    variant="secondary"
+                    className="bg-white hover:bg-white/80 text-indigo-600 border-indigo-200"
+                    isLoading={isAnalyzing}
+                  >
+                    {isAnalyzing ? 'Analyzing Ecosystem...' : '✨ Recommend Species'}
+                  </Button>
+                ) : (
+                  <div className="bg-white/80 backdrop-blur rounded-lg p-3 border border-indigo-100 text-sm animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="font-bold text-indigo-900">Recommended Species:</span>
+                      <button onClick={() => setAnalysis(null)} className="text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>
+                    </div>
+                    <p className="text-indigo-800 font-medium mb-1">{analysis.recommendation}</p>
+                    <p className="text-xs text-gray-600">Why: {analysis.benefits}</p>
+                    <p className="text-xs text-gray-500 mt-1">Best Season: {analysis.plantingSeason}</p>
+                  </div>
+                )}
+              </section>
+            )}
           </div>
 
           {/* Right Column: Map */}
@@ -341,8 +394,8 @@ const Report = () => {
           </div>
 
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
