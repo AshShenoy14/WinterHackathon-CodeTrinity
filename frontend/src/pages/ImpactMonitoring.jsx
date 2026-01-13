@@ -17,6 +17,36 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadialBarChart, RadialBar, PieChart, Pie, Cell } from 'recharts';
 
+const AnimatedCounter = ({ value, prefix = '', suffix = '' }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = parseFloat(value) || 0; // Support float
+    if (start === end) return;
+
+    const duration = 2000;
+    const incrementTime = 50;
+    const steps = duration / incrementTime;
+    const increment = (end - start) / steps;
+
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        // Check if original value was int or float
+        setCount(Number.isInteger(end) ? Math.ceil(start) : parseFloat(start.toFixed(1)));
+      }
+    }, incrementTime);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span>{prefix}{count}{suffix}</span>;
+};
+
 const ImpactMonitoring = () => {
   const [reports, setReports] = useState([]);
   const [impactData, setImpactData] = useState({
@@ -195,69 +225,104 @@ const ImpactMonitoring = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Projected Impact Banner */}
+        <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-6 text-white shadow-lg mb-8 flex flex-col md:flex-row items-center justify-between">
+          <div className="flex items-center space-x-4 mb-4 md:mb-0">
+            <div className="p-3 bg-white/20 rounded-full backdrop-blur-sm">
+              <Target className="w-8 h-8 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold">Projected Impact</h2>
+              <p className="text-indigo-100 text-sm">
+                If the <span className="font-bold text-white">{reports.filter(r => r.status !== 'completed').length} pending areas</span> are greened,
+                we project a <span className="font-bold text-yellow-300">{(reports.filter(r => r.status !== 'completed').length * 0.04).toFixed(2)}°C</span> local cooling effect.
+              </p>
+            </div>
+          </div>
+          <button className="px-6 py-2 bg-white text-indigo-600 rounded-lg font-bold hover:bg-gray-100 transition shadow-md">
+            View Targets
+          </button>
+        </div>
+
+
+        {/* Key Metrics */}
+
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-green-100 rounded-full">
                 <TreePine className="w-6 h-6 text-green-600" />
               </div>
-              <span className="text-2xl font-bold text-green-600">+{impactData.treesPlanted}</span>
+              <span className="text-2xl font-bold text-green-600">
+                <AnimatedCounter value={impactData.treesPlanted} prefix="+" />
+              </span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">Trees Planted</h3>
             <p className="text-xs text-gray-500 mt-1">This year</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-100 rounded-full">
                 <Leaf className="w-6 h-6 text-blue-600" />
               </div>
-              <span className="text-2xl font-bold text-blue-600">+{impactData.greenCoverIncrease}</span>
+              <span className="text-2xl font-bold text-blue-600">
+                <AnimatedCounter value={impactData.greenCoverIncrease} prefix="+" />
+              </span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">Acres Green Cover</h3>
             <p className="text-xs text-gray-500 mt-1">Total increase</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-red-100 rounded-full">
                 <Thermometer className="w-6 h-6 text-red-600" />
               </div>
-              <span className="text-2xl font-bold text-red-600">-{impactData.heatReduction.toFixed(1)}°C</span>
+              {/* Special case for float */}
+              <span className="text-2xl font-bold text-red-600">
+                -<AnimatedCounter value={Math.abs(impactData.heatReduction)} />°C
+              </span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">Heat Reduction</h3>
             <p className="text-xs text-gray-500 mt-1">Average impact</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-yellow-100 rounded-full">
                 <Activity className="w-6 h-6 text-yellow-600" />
               </div>
-              <span className="text-2xl font-bold text-yellow-600">{impactData.co2Absorbed}</span>
+              <span className="text-2xl font-bold text-yellow-600">
+                <AnimatedCounter value={impactData.co2Absorbed} />
+              </span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">CO₂ Absorbed (lbs)</h3>
             <p className="text-xs text-gray-500 mt-1">Annually</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-cyan-100 rounded-full">
                 <Droplets className="w-6 h-6 text-cyan-600" />
               </div>
-              <span className="text-2xl font-bold text-cyan-600">{impactData.waterConserved}</span>
+              <span className="text-2xl font-bold text-cyan-600">
+                <AnimatedCounter value={impactData.waterConserved} />
+              </span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">Gallons Conserved</h3>
             <p className="text-xs text-gray-500 mt-1">Total savings</p>
           </div>
 
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="bg-white rounded-lg shadow p-6 transform hover:scale-105 transition-transform duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-purple-100 rounded-full">
                 <Users className="w-6 h-6 text-purple-600" />
               </div>
-              <span className="text-2xl font-bold text-purple-600">{impactData.communityEngagement}</span>
+              <span className="text-2xl font-bold text-purple-600">
+                <AnimatedCounter value={impactData.communityEngagement} />
+              </span>
             </div>
             <h3 className="text-sm font-medium text-gray-600">Community Upvotes</h3>
             <p className="text-xs text-gray-500 mt-1">Total engagement</p>

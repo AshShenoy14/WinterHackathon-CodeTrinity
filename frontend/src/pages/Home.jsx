@@ -56,11 +56,24 @@ const Home = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const filteredReports = reports.filter(report =>
-    (activeTab === 'all' || report.status === activeTab) &&
-    (report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      report.location.address?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredReports = reports.filter(report => {
+    // Map UI tabs to Status values
+    // 'all' -> any
+    // 'pending' -> 'pending'
+    // 'in-progress' -> 'under_review', 'in_progress', 'implemented'
+    // 'resolved' -> 'approved', 'completed', 'resolved'
+
+    let statusMatch = false;
+    if (activeTab === 'all') statusMatch = true;
+    else if (activeTab === 'pending') statusMatch = report.status === 'pending';
+    else if (activeTab === 'in-progress') statusMatch = ['under_review', 'in_progress', 'implemented'].includes(report.status);
+    else if (activeTab === 'resolved') statusMatch = ['approved', 'completed', 'resolved'].includes(report.status);
+
+    const textMatch = report.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      report.location.address?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return statusMatch && textMatch;
+  });
 
   const stats = [
     { value: '1,200+', label: 'Reports Submitted', icon: <BarChart2 className="w-6 h-6" /> },
@@ -111,10 +124,25 @@ const Home = () => {
     show: { opacity: 1, y: 0 }
   };
 
+  const [currentBgIndex, setCurrentBgIndex] = useState(0);
+
+  const backgrounds = [
+    "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=1920&auto=format&fit=crop", // Nature
+    "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=1920&auto=format&fit=crop", // Forest
+    "https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?q=80&w=1920&auto=format&fit=crop", // Garden
+    "https://images.unsplash.com/photo-1596230529625-7ee541fb33f7?q=80&w=1920&auto=format&fit=crop"  // Urban Green
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentBgIndex((prev) => (prev + 1) % backgrounds.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gray-5 font-sans">
-        {/* Hero Section */}
+      <div className="min-h-screen bg-gray-50 font-sans">
         {/* Hero Section */}
         <section className="relative overflow-hidden min-h-[700px] flex items-center justify-center bg-gradient-hero text-white pt-24 pb-20">
 
@@ -124,11 +152,19 @@ const Home = () => {
             <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-secondary-500/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '2s' }}></div>
           </div>
 
-          <img
-            src="/bg_image.png"
-            alt="Green landscape"
-            className="absolute inset-0 w-full h-full object-cover object-center opacity-30"
-          />
+          {/* Rotating Background Image */}
+          {backgrounds.map((bg, index) => (
+            <motion.img
+              key={index}
+              src={bg}
+              alt={`Background ${index}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: index === currentBgIndex ? 0.4 : 0 }}
+              transition={{ duration: 1.5 }}
+              className="absolute inset-0 w-full h-full object-cover object-center"
+              style={{ zIndex: 0 }}
+            />
+          ))}
 
           <Container className="relative z-10">
             <div className="max-w-5xl mx-auto text-center px-4">
@@ -224,6 +260,33 @@ const Home = () => {
 
             <div className="bg-white rounded-3xl shadow-2xl shadow-gray-200/50 overflow-hidden border border-gray-100 transform hover:scale-[1.01] transition-transform duration-500">
               <MapView reports={filteredReports} />
+            </div>
+
+            {/* Search Results Feedback */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-600 mb-4">
+                Found <span className="font-bold text-primary-600">{filteredReports.length}</span> reports matching your criteria.
+              </p>
+
+              {/* Optional: List View for better Search UX */}
+              {searchQuery && filteredReports.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
+                  {filteredReports.slice(0, 3).map(report => (
+                    <Card key={report.id} className="p-4 border hover:shadow-md transition">
+                      <h4 className="font-bold text-gray-800">{report.title}</h4>
+                      <p className="text-sm text-gray-500 mb-2 truncate">{report.location?.address}</p>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${report.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          report.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                        {report.status.charAt(0).toUpperCase() + report.status.slice(1)}
+                      </span>
+                    </Card>
+                  ))}
+                  {filteredReports.length > 3 && (
+                    <p className="col-span-full text-center text-sm text-gray-500">...and {filteredReports.length - 3} more on the map.</p>
+                  )}
+                </div>
+              )}
             </div>
           </Container>
         </section>

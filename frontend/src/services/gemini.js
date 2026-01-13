@@ -18,17 +18,33 @@ export const analyzeImageWithGemini = async (imageBase64, mimeType = "image/jpeg
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
-        You are an environmental expert analyzing an image for a "Green Protocol" app.
-        The user reported this as: ${reportType}.
+        You are acting as a "Cloud Vision API" agent for the GreenPulse app.
+        The user reported this image as: ${reportType}.
         
-        Analyze the image and return a JSON response with the following fields:
+        CRITICAL: DETERMINE RELEVANCE FIRST.
+        If the image is:
+        - Indoor environment (room, office, home)
+        - A screenshot, meme, or computer generated text
+        - A selfie or portrait of a person
+        - Completely blurry or dark
+        - Only a single object like a keyboard, mouse, cup, etc.
+        ...then it is IRRELEVANT. Return "isRelevant": false.
+
+        Only if it is a VALID outdoor, nature, city street, or environmental scene:
+        - Analyze for greening potential (planting trees, cleaning waste, etc.)
+        - Set "isRelevant": true.
+
+        Return STRICT JSON:
         {
+            "isRelevant": boolean,
+            "spamReason": "string (Why it is rejected, e.g. 'Indoor/Office image detected')",
+            "visionTags": ["list", "of", "detected", "objects"],
             "riskLevel": "Low" | "Medium" | "High",
             "confidence": number (0-1),
-            "recommendation": "Specific native plant suggestions or action items (Max 15 words)",
+            "recommendation": "Native plant suggestions or action items (Max 15 words)",
             "environmentalImpact": "Short description of impact",
             "nativeSpecies": ["List", "of", "3", "species"],
-            "typeConfirmed": boolean (does the image match the report type?)
+            "typeConfirmed": boolean
         }
         Only return the JSON.
         `;

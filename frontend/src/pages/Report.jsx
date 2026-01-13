@@ -69,12 +69,27 @@ const Report = () => {
     }
   }, []);
 
-  const handleMapClick = (e) => {
+  const handleMapClick = async (e) => {
     if (e.detail.latLng) {
       const newLoc = { lat: e.detail.latLng.lat, lng: e.detail.latLng.lng };
       setLocation(newLoc);
+
+      // Default coordinate string
       setAddress(`${newLoc.lat.toFixed(5)}, ${newLoc.lng.toFixed(5)}`);
-      // Optionally reverse geocode here if API enabled
+
+      // Reverse Geocoding via Google Maps API
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${newLoc.lat},${newLoc.lng}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const data = await response.json();
+        if (data.results && data.results[0]) {
+          setAddress(data.results[0].formatted_address);
+          toast.success("Location identified: " + data.results[0].formatted_address.split(',')[0]);
+        }
+      } catch (error) {
+        console.error("Geocoding failed:", error);
+      }
     }
   };
 
@@ -305,8 +320,18 @@ const Report = () => {
 
                           try {
                             const result = await aiAPI.analyze(reportType, base64data);
+
+                            if (result.isRelevant === false) {
+                              toast.error(`Image Flagged: ${result.spamReason || 'Irrelevant content detected'}`);
+                              // Do not set analysis result to prevent using irrelevant data
+                              // Or we can save it to show "Rejected" state UI.
+                              setAnalysis({ ...result, rejected: true });
+                              return;
+                            }
+
                             setAnalysis(result);
-                            toast.success("Gemini analysis complete!", { icon: '✨' });
+                            toast.success("Cloud Vision Verified: Relevant Image", { icon: '✅' });
+
                           } catch (err) {
                             console.error("AI Analysis failed:", err);
                             toast.error("AI Analysis failed. Using offline simulation.");
