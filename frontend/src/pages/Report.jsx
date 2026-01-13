@@ -372,7 +372,7 @@ const Report = () => {
                       <button onClick={() => setAnalysis(null)} className="text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>
                     </div>
                     <p className="text-indigo-800 font-medium mb-1">{analysis.recommendation}</p>
-                    <p className="text-xs text-gray-600">Why: {analysis.benefits}</p>
+                    <p className="text-xs text-gray-600">Why: {analysis.environmentalImpact || analysis.benefits}</p>
                     <p className="text-xs text-gray-500 mt-1">Best Season: {analysis.plantingSeason}</p>
                   </div>
                 )}

@@ -177,9 +177,7 @@ class ApiClient {
       return newReport;
     }
 
-    if (endpoint.includes('ai-analyze')) {
-      return { riskLevel: 'Predicted', recommendation: 'Mock AI Recommendation', confidence: 0.95 };
-    }
+    // Duplicate ai-analyze block removed
     if (endpoint.includes('users-login') || endpoint.includes('users-register')) {
       return {
         token: 'mock-token',
